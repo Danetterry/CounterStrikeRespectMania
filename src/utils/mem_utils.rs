@@ -1,6 +1,6 @@
+use process_memory::{CopyAddress, Pid};
 use winapi::um::{handleapi::CloseHandle, tlhelp32};
 use winapi::{shared::minwindef, um::handleapi::INVALID_HANDLE_VALUE};
-use process_memory::Pid;
 
 // These things were stolen from https://github.com/Tommoa/rs-process-memory/pull/4
 // Thank you, Kiiyya!
@@ -38,17 +38,12 @@ pub fn get_pid(process_name: &str) -> std::io::Result<Pid> {
 
     let snapshot: winapi::um::winnt::HANDLE;
     unsafe {
-        snapshot = tlhelp32::CreateToolhelp32Snapshot(
-            tlhelp32::TH32CS_SNAPPROCESS,
-            0,
-        );
+        snapshot = tlhelp32::CreateToolhelp32Snapshot(tlhelp32::TH32CS_SNAPPROCESS, 0);
         if snapshot == INVALID_HANDLE_VALUE {
             return Err(std::io::Error::last_os_error());
         }
 
-        if tlhelp32::Process32First(snapshot, &mut entry)
-            == minwindef::TRUE
-        {
+        if tlhelp32::Process32First(snapshot, &mut entry) == minwindef::TRUE {
             // makeshift do-while
             loop {
                 // println!("Have process: {}", utf8_to_string(&entry.szExeFile));
@@ -60,9 +55,7 @@ pub fn get_pid(process_name: &str) -> std::io::Result<Pid> {
                     return Ok(pid);
                 }
 
-                if tlhelp32::Process32Next(snapshot, &mut entry)
-                    == minwindef::FALSE
-                {
+                if tlhelp32::Process32Next(snapshot, &mut entry) == minwindef::FALSE {
                     break;
                 }
             }
@@ -93,7 +86,6 @@ pub trait ModuleInfo {
     /// [`set_offset`]: trait.Memory.html#tymethod.set_offset
     fn get_module_base(&self, name: &str) -> std::io::Result<usize>;
 }
-
 
 #[allow(clippy::clippy::cast_possible_truncation)] // for size_of as u32
 impl ModuleInfo for Pid {
@@ -156,28 +148,24 @@ impl ModuleInfo for Pid {
 }
 
 // This was pasted from https://github.com/Tommoa/rs-process-memory/issues/3
-// Thank you so much, lsaa
-pub fn try_read_string(handle: process_memory::ProcessHandle, mut starting_offsets: Vec<usize>, buffer_size : i32) -> Result<String, std::io::Error> {
-    //Read String 4 in 4 bytes
-    use process_memory::*;
-    use std::mem::transmute;
-    let number_of_passes: f32 = buffer_size as f32 / 4.0;
+pub fn try_read_string(handle: process_memory::ProcessHandle, starting_offsets: Vec<usize>) -> Result<String, std::io::Error> {
+    let mut offset = handle.get_offset(&starting_offsets)?;
+    let mut parts = Vec::<u8>::new();
+    let mut byte = [0u8; 1];
+    let max_bytes = 32; // Max bytes to read
+    let mut bytes_read = 0;
 
-    let last_offset = starting_offsets.pop().unwrap();
-    let offsets: Vec<usize> = starting_offsets.clone();
-
-    let mut string_return = String::new();
-    'outer: for i in 0..(number_of_passes.ceil() as i32) {
-        let player_name = DataMember::<u32>::new_offset(handle, [offsets.clone(), vec![last_offset + (4*i as usize)]].concat());
-        let bytes: [u8; 4] = unsafe { transmute(player_name.read()?.to_le()) };
-        for byte in bytes.iter() {
-            if *byte != 0x0_u8 {
-                string_return.push(*byte as char);
-            } else {
-                break 'outer;
-            }
+    loop {
+        if bytes_read >= max_bytes {
+            break;
         }
+        handle.copy_address(offset, &mut byte)?;
+        if byte[0] == 0 {
+            break;
+        }
+        offset += 1;
+        parts.push(byte[0]);
+        bytes_read += 1;
     }
-
-    Ok(string_return)
+    String::from_utf8(parts).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
 }

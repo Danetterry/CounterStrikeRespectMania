@@ -1,11 +1,16 @@
 use crate::offsets;
 use crate::utils::entity::{get_all_entities, get_local_player, world_to_screen, Entity};
 use crate::utils::memory_reader::MemoryReader;
-use egui_render_three_d::three_d::{vec2, Camera, ClearState, ColorMaterial, Gm, Line, Matrix4, RenderTarget, Srgba, Vector2, Viewport};
+use crate::utils::options::CheatOptions;
+use egui_render_three_d::three_d::{
+    vec2, Camera, ClearState, ColorMaterial, Gm, Line, Matrix4, RenderTarget, Srgba, Vector2,
+    Viewport,
+};
 use egui_render_three_d::{three_d, ThreeDBackend};
 use egui_window_glfw_passthrough::GlfwBackend;
-use three_d_text_builder::{TextRef, TextBuilder, TextAlign, TextPosition, Text, TextMesh, TextMaterial};
-use crate::utils::options::CheatOptions;
+use three_d_text_builder::{
+    Text, TextAlign, TextBuilder, TextMaterial, TextMesh, TextPosition, TextRef,
+};
 
 pub fn render_esp(
     three_d_backend: &ThreeDBackend,
@@ -13,18 +18,18 @@ pub fn render_esp(
     win_size: &[f32; 2],
     memory_reader: &MemoryReader,
     text_builder: &mut TextBuilder,
-    options: &CheatOptions
+    options: &CheatOptions,
 ) {
     // Getting all players
-    let entities = get_all_entities(&memory_reader);
+    let entities = get_all_entities(memory_reader);
+
+    // Getting local player for team compare
+    let local_player = get_local_player(memory_reader);
 
     // This needed for esp
     let view_matrix = memory_reader.read_matrix4_f32(
         memory_reader.module + offsets::offsets::cs2_dumper::offsets::client_dll::dwViewMatrix,
     );
-
-    // Getting local player for team compare
-    let local_player = get_local_player(&memory_reader);
 
     // Creating camera
     let camera = Camera::new_2d(Viewport::new_at_origo(
@@ -45,21 +50,27 @@ pub fn render_esp(
     // Getting all lines
     let lines = get_lines(
         &three_d_backend.context,
-        &win_size,
+        win_size,
         &entities,
         &view_matrix,
         local_player.team,
-        &options
+        options,
     );
-
 
     // Render each model in the vector
     for model in lines {
         render_target.render(&camera, std::iter::once(model), &[]);
     }
 
-    if options.enable_text == true {
-        let texts = get_text(&three_d_backend.context, &win_size, text_builder, &entities, &view_matrix, local_player.team);
+    if options.enable_text {
+        let texts = get_text(
+            &three_d_backend.context,
+            win_size,
+            text_builder,
+            &entities,
+            &view_matrix,
+            local_player.team,
+        );
 
         for model in texts {
             render_target.render(&camera, model, &[]);
@@ -73,7 +84,7 @@ pub fn get_lines(
     entities: &Vec<Entity>,
     view_matrix: &Matrix4<f32>,
     local_player_team: i32,
-    options: &CheatOptions
+    options: &CheatOptions,
 ) -> Vec<Gm<Line, ColorMaterial>> {
     let mut lines = Vec::new();
 
@@ -84,11 +95,11 @@ pub fn get_lines(
         }
 
         // Translate player position into 2D
-        let head = world_to_screen(&entity.eye_position, view_matrix, &win_size);
-        let feet = world_to_screen(&entity.position, view_matrix, &win_size);
+        let head = world_to_screen(&entity.eye_position, view_matrix, win_size);
+        let feet = world_to_screen(&entity.position, view_matrix, win_size);
 
         // Skip if not on screen
-        if feet == Vector2::new(0.0, 0.0) {
+        if feet == Vector2::new(0.0, 0.0) || head == Vector2::new(0.0, 0.0) {
             continue;
         }
 
@@ -100,8 +111,7 @@ pub fn get_lines(
         // Calculate box width
         let width = (feet.y - head.y) / 3.0;
 
-
-        if options.enable_line == true {
+        if options.enable_line {
             // Line from screen corner to box bottom
             let line = Gm::new(
                 Line::new(
@@ -119,7 +129,9 @@ pub fn get_lines(
             lines.push(line);
         }
 
-        if options.enable_box == false { continue; }
+        if !options.enable_box {
+            continue;
+        }
 
         // Lower line of box
         let lower = Gm::new(
@@ -141,8 +153,14 @@ pub fn get_lines(
         let upper = Gm::new(
             Line::new(
                 three_d_context,
-                vec2(feet.x + width, win_size[1] - head.y + ((feet.y - head.y) / 6.5)),
-                vec2(feet.x - width, win_size[1] - head.y + ((feet.y - head.y) / 6.5)),
+                vec2(
+                    feet.x + width,
+                    win_size[1] - head.y + ((feet.y - head.y) / 6.5),
+                ),
+                vec2(
+                    feet.x - width,
+                    win_size[1] - head.y + ((feet.y - head.y) / 6.5),
+                ),
                 1.0,
             ),
             ColorMaterial {
@@ -157,7 +175,10 @@ pub fn get_lines(
         let left = Gm::new(
             Line::new(
                 three_d_context,
-                vec2(feet.x - width, win_size[1] - head.y + ((feet.y - head.y) / 6.5)),
+                vec2(
+                    feet.x - width,
+                    win_size[1] - head.y + ((feet.y - head.y) / 6.5),
+                ),
                 vec2(feet.x - width, win_size[1] - feet.y),
                 1.0,
             ),
@@ -173,7 +194,10 @@ pub fn get_lines(
         let right = Gm::new(
             Line::new(
                 three_d_context,
-                vec2(feet.x + width, win_size[1] - head.y + ((feet.y - head.y) / 6.5)),
+                vec2(
+                    feet.x + width,
+                    win_size[1] - head.y + ((feet.y - head.y) / 6.5),
+                ),
                 vec2(feet.x + width, win_size[1] - feet.y),
                 1.0,
             ),
@@ -192,13 +216,7 @@ pub fn get_lines(
         let mut thickness = width / 5.0;
 
         // Thickness limits
-        if thickness >= 5.0 {
-            thickness = 5.0;
-        }
-
-        if thickness <= 2.0 {
-            thickness = 2.0;
-        }
+        thickness = thickness.clamp(2.0, 5.0);
 
         // Health bar renderer
         let health_bar = Gm::new(
@@ -206,7 +224,9 @@ pub fn get_lines(
                 three_d_context,
                 vec2(
                     feet.x - width - thickness,
-                    win_size[1] - head.y + ((feet.y - head.y) / 6.5) + (head.y - feet.y - ((feet.y - head.y) / 6.5)) * (1.0 - health_multiplier),
+                    win_size[1] - head.y
+                        + ((feet.y - head.y) / 6.5)
+                        + (head.y - feet.y - ((feet.y - head.y) / 6.5)) * (1.0 - health_multiplier),
                 ),
                 vec2(feet.x - width - thickness, win_size[1] - feet.y),
                 thickness,
@@ -235,7 +255,7 @@ pub fn get_text<'a>(
     entities: &Vec<Entity>,
     view_matrix: &Matrix4<f32>,
     local_player_team: i32,
-) -> Vec<impl Iterator<Item=Gm<TextMesh, TextMaterial>> + 'a> {
+) -> Vec<impl Iterator<Item = Gm<TextMesh, TextMaterial>> + 'a> {
     // Init text vector
     let mut texts = Vec::new();
 
@@ -246,8 +266,8 @@ pub fn get_text<'a>(
         }
 
         // Translate player position into 2D
-        let head = world_to_screen(&entity.eye_position, view_matrix, &win_size);
-        let feet = world_to_screen(&entity.position, view_matrix, &win_size);
+        let head = world_to_screen(&entity.eye_position, view_matrix, win_size);
+        let feet = world_to_screen(&entity.position, view_matrix, win_size);
 
         // Skip if not on screen
         if head == Vector2::new(0.0, 0.0) {
@@ -273,13 +293,16 @@ pub fn get_text<'a>(
             ..Default::default()
         };
 
-        let name_text_model = text_builder.build(three_d_context, &[
-            TextRef {
-                text: "",
-                ..Default::default()
-            },
-            name_text.as_ref()
-        ]);
+        let name_text_model = text_builder.build(
+            three_d_context,
+            &[
+                TextRef {
+                    text: "",
+                    ..Default::default()
+                },
+                name_text.as_ref(),
+            ],
+        );
 
         texts.push(name_text_model);
 
@@ -291,7 +314,10 @@ pub fn get_text<'a>(
             // Idk but this is necessary
             align: TextAlign::Viewport(0, 1),
             // Move text to box corner
-            position: TextPosition::Pixels(vec2(feet.x, win_size[1] - head.y + 10.0 + ((feet.y - head.y) / 6.5))),
+            position: TextPosition::Pixels(vec2(
+                feet.x,
+                win_size[1] - head.y + 10.0 + ((feet.y - head.y) / 6.5),
+            )),
             // Set text size based on box width
             // size: width / 3.0,
             // Using fixed size because of memory leak
@@ -299,13 +325,16 @@ pub fn get_text<'a>(
             ..Default::default()
         };
 
-        let weapon_text_model = text_builder.build(three_d_context, &[
-            TextRef {
-                text: "",
-                ..Default::default()
-            },
-            weapon_text.as_ref()
-        ]);
+        let weapon_text_model = text_builder.build(
+            three_d_context,
+            &[
+                TextRef {
+                    text: "",
+                    ..Default::default()
+                },
+                weapon_text.as_ref(),
+            ],
+        );
 
         texts.push(weapon_text_model);
 

@@ -35,7 +35,7 @@ impl MemoryReader {
 
         unsafe {
             // Reading
-            offset.read().unwrap_or_else(|_| 0)
+            offset.read().unwrap_or(0)
         }
     }
 

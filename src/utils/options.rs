@@ -6,7 +6,7 @@ pub struct CheatOptions {
 }
 
 impl Default for CheatOptions {
-     fn default() -> CheatOptions {
+    fn default() -> CheatOptions {
         CheatOptions {
             enable_line: false,
             enable_box: true,

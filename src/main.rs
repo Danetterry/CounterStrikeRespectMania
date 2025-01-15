@@ -27,12 +27,14 @@ fn main() {
     let memory_reader = MemoryReader::new("cs2.exe", "client.dll");
 
     // Load font for text builder
-    let assets = load(&["C:/Windows/Fonts/Arial.ttf"]).expect("Failed to load font (C:/Windows/Fonts/Arial.ttf)");
+    let assets = load(&["C:/Windows/Fonts/Arial.ttf"])
+        .expect("Failed to load font (C:/Windows/Fonts/Arial.ttf)");
 
     let text_builder = TextBuilder::new(
         assets.get("Arial.ttf").unwrap(),
-        TextBuilderSettings::default()
-    ).expect("Failed to create text builder from TTF font");
+        TextBuilderSettings::default(),
+    )
+    .expect("Failed to create text builder from TTF font");
 
     // Creating options with default settings
     let options = CheatOptions::default();
@@ -82,12 +84,12 @@ impl EguiOverlay for OverlayGui {
 
         // Rendering ESP
         render_esp(
-            &three_d_backend,
-            &glfw_backend,
+            three_d_backend,
+            glfw_backend,
             &win_size,
             &self.memory_reader,
             &mut self.text_builder,
-            &self.options
+            &self.options,
         );
 
         // here you decide if you want to be passthrough or not.

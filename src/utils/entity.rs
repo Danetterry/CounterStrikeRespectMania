@@ -1,11 +1,10 @@
-use std::sync::mpsc;
-use std::thread;
 use crate::offsets::client_dll::cs2_dumper::schemas::client_dll;
 use crate::offsets::offsets::cs2_dumper::offsets::client_dll as client_dll_offsets;
 use crate::utils::memory_reader::MemoryReader;
-use egui_render_three_d::three_d::{Matrix4, Vector2, Vector3};
 use crate::utils::weapon::{proccess_weapon, Weapon};
-
+use egui_render_three_d::three_d::{Matrix4, Vector2, Vector3};
+use std::sync::mpsc;
+use std::thread;
 
 // This structure contains all needed thing about player
 pub struct Entity {
@@ -15,7 +14,7 @@ pub struct Entity {
     pub position: Vector3<f32>,
     pub eye_position: Vector3<f32>,
     pub life_state: u8,
-//    pub active_weapon_index: i16,
+    //    pub active_weapon_index: i16,
     pub active_weapon_name: String,
 }
 
@@ -28,7 +27,7 @@ pub fn get_all_entities(memory_reader: &MemoryReader) -> Vec<Entity> {
         let entity =
             memory_reader.read_usize(memory_reader.module + client_dll_offsets::dwEntityList);
 
-        let mut list_entity = memory_reader.read_usize(entity + ((8 * (i & 0x7FFF) >> 9) + 16));
+        let mut list_entity = memory_reader.read_usize(entity + (((8 * (i & 0x7FFF)) >> 9) + 16));
         if list_entity == 0 {
             continue;
         }
@@ -66,16 +65,21 @@ pub fn get_all_entities(memory_reader: &MemoryReader) -> Vec<Entity> {
         let player_health =
             memory_reader.read_i32(entity_pawn + client_dll::C_BaseEntity::m_iHealth);
 
-        let player_name = memory_reader.read_string(
-            entity_controller + client_dll::CBasePlayerController::m_iszPlayerName,
-        );
+        let player_name = memory_reader
+            .read_string(entity_controller + client_dll::CBasePlayerController::m_iszPlayerName);
 
         let player_life_state =
             memory_reader.read_u8(entity_pawn + client_dll::C_BaseEntity::m_lifeState);
 
-        let player_active_weapon = memory_reader.read_usize(entity_pawn + client_dll::C_CSPlayerPawnBase::m_pClippingWeapon);
+        let player_active_weapon = memory_reader
+            .read_usize(entity_pawn + client_dll::C_CSPlayerPawnBase::m_pClippingWeapon);
 
-        let player_weapon_index = memory_reader.read_i16(player_active_weapon + client_dll::C_EconEntity::m_AttributeManager + client_dll::C_AttributeContainer::m_Item + client_dll::C_EconItemView::m_iItemDefinitionIndex);
+        let player_weapon_index = memory_reader.read_i16(
+            player_active_weapon
+                + client_dll::C_EconEntity::m_AttributeManager
+                + client_dll::C_AttributeContainer::m_Item
+                + client_dll::C_EconItemView::m_iItemDefinitionIndex,
+        );
 
         let (tx, rx) = mpsc::channel();
 
@@ -112,9 +116,8 @@ pub fn get_local_player(memory_reader: &MemoryReader) -> Entity {
     let local_player_controller = memory_reader
         .read_usize(memory_reader.module + client_dll_offsets::dwLocalPlayerController);
 
-    let player_name = memory_reader.read_string(
-        local_player_controller + client_dll::CBasePlayerController::m_iszPlayerName,
-    );
+    let player_name = memory_reader
+        .read_string(local_player_controller + client_dll::CBasePlayerController::m_iszPlayerName);
 
     let player_health =
         memory_reader.read_i32(local_player_pawn + client_dll::C_BaseEntity::m_iHealth);
@@ -132,9 +135,15 @@ pub fn get_local_player(memory_reader: &MemoryReader) -> Entity {
     let player_life_state =
         memory_reader.read_u8(local_player_pawn + client_dll::C_BaseEntity::m_lifeState);
 
-    let player_active_weapon = memory_reader.read_usize(local_player_pawn + client_dll::C_CSPlayerPawnBase::m_pClippingWeapon);
+    let player_active_weapon = memory_reader
+        .read_usize(local_player_pawn + client_dll::C_CSPlayerPawnBase::m_pClippingWeapon);
 
-    let player_weapon_index = memory_reader.read_i16(player_active_weapon + client_dll::C_EconEntity::m_AttributeManager + client_dll::C_AttributeContainer::m_Item + client_dll::C_EconItemView::m_iItemDefinitionIndex);
+    let player_weapon_index = memory_reader.read_i16(
+        player_active_weapon
+            + client_dll::C_EconEntity::m_AttributeManager
+            + client_dll::C_AttributeContainer::m_Item
+            + client_dll::C_EconItemView::m_iItemDefinitionIndex,
+    );
 
     let (tx, rx) = mpsc::channel();
 
@@ -155,7 +164,7 @@ pub fn get_local_player(memory_reader: &MemoryReader) -> Entity {
         eye_position: player_eye_position,
         life_state: player_life_state,
         //active_weapon_index: player_weapon_index,
-        active_weapon_name: weapon_string
+        active_weapon_name: weapon_string,
     }
 }
 

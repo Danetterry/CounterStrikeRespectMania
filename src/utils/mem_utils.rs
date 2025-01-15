@@ -87,7 +87,7 @@ pub trait ModuleInfo {
     fn get_module_base(&self, name: &str) -> std::io::Result<usize>;
 }
 
-#[allow(clippy::clippy::cast_possible_truncation)] // for size_of as u32
+#[allow(clippy::cast_possible_truncation)] // for size_of as u32
 impl ModuleInfo for Pid {
     fn get_module_base(&self, name: &str) -> std::io::Result<usize> {
         // taken from https://stackoverflow.com/questions/41552466/how-do-i-get-the-physical-baseaddress-of-an-dll-used-in-a-process
@@ -152,20 +152,38 @@ pub fn try_read_string(handle: process_memory::ProcessHandle, starting_offsets: 
     let mut offset = handle.get_offset(&starting_offsets)?;
     let mut parts = Vec::<u8>::new();
     let mut byte = [0u8; 1];
-    let max_bytes = 32; // Max bytes to read
-    let mut bytes_read = 0;
-
     loop {
-        if bytes_read >= max_bytes {
-            break;
-        }
         handle.copy_address(offset, &mut byte)?;
         if byte[0] == 0 {
             break;
         }
         offset += 1;
         parts.push(byte[0]);
-        bytes_read += 1;
     }
     String::from_utf8(parts).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
 }
+
+// pub fn try_read_string(
+//     handle: process_memory::ProcessHandle,
+//     starting_offsets: Vec<usize>,
+// ) -> Result<String, std::io::Error> {
+//     let mut offset = handle.get_offset(&starting_offsets)?;
+//     let mut parts = Vec::<u8>::new();
+//     let mut byte = [0u8; 1];
+//     let max_bytes = 64; // Max bytes to read
+//     let mut bytes_read = 0;
+// 
+//     loop {
+//         if bytes_read >= max_bytes {
+//             break;
+//         }
+//         handle.copy_address(offset, &mut byte)?;
+//         if byte[0] == 0 {
+//             break;
+//         }
+//         offset += 1;
+//         parts.push(byte[0]);
+//         bytes_read += 1;
+//     }
+//     String::from_utf8(parts).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+// }

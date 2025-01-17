@@ -148,7 +148,10 @@ impl ModuleInfo for Pid {
 }
 
 // This was pasted from https://github.com/Tommoa/rs-process-memory/issues/3
-pub fn try_read_string(handle: process_memory::ProcessHandle, starting_offsets: Vec<usize>) -> Result<String, std::io::Error> {
+pub fn try_read_string(
+    handle: process_memory::ProcessHandle,
+    starting_offsets: Vec<usize>,
+) -> Result<String, std::io::Error> {
     let mut offset = handle.get_offset(&starting_offsets)?;
     let mut parts = Vec::<u8>::new();
     let mut byte = [0u8; 1];
@@ -172,7 +175,7 @@ pub fn try_read_string(handle: process_memory::ProcessHandle, starting_offsets: 
 //     let mut byte = [0u8; 1];
 //     let max_bytes = 64; // Max bytes to read
 //     let mut bytes_read = 0;
-// 
+//
 //     loop {
 //         if bytes_read >= max_bytes {
 //             break;

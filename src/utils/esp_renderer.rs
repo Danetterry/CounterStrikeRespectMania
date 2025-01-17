@@ -1,4 +1,5 @@
 use crate::offsets;
+use crate::utils::bones::BoneConnection;
 use crate::utils::entity::{get_all_entities, get_local_player, world_to_screen, Entity};
 use crate::utils::memory_reader::MemoryReader;
 use crate::utils::options::CheatOptions;
@@ -19,12 +20,13 @@ pub fn render_esp(
     memory_reader: &MemoryReader,
     text_builder: &mut TextBuilder,
     options: &CheatOptions,
+    bone_connection: &[BoneConnection],
 ) {
     // Getting all players
-    let entities = get_all_entities(memory_reader);
+    let entities = get_all_entities(memory_reader, bone_connection);
 
     // Getting local player for team compare
-    let local_player = get_local_player(memory_reader);
+    let local_player = get_local_player(memory_reader, bone_connection);
 
     // This needed for esp
     let view_matrix = memory_reader.read_matrix4_f32(
@@ -208,6 +210,26 @@ pub fn get_lines(
         );
 
         lines.push(right);
+
+        for bone in &entity.bones {
+            let first_bone = world_to_screen(&bone.0, view_matrix, win_size);
+            let second_bone = world_to_screen(&bone.1, view_matrix, win_size);
+
+            let bone_line = Gm::new(
+                Line::new(
+                    three_d_context,
+                    vec2(first_bone.x, win_size[1] - first_bone.y),
+                    vec2(second_bone.x, win_size[1] - second_bone.y),
+                    1.0,
+                ),
+                ColorMaterial {
+                    color: Srgba::GREEN,
+                    ..Default::default()
+                },
+            );
+
+            lines.push(bone_line);
+        }
 
         // Calculate health multiplier (for example 64 hp -> 0.64)
         let health_multiplier = entity.health as f32 / 100.0;

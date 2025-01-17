@@ -1,5 +1,6 @@
 use crate::offsets::client_dll::cs2_dumper::schemas::client_dll;
 use crate::offsets::offsets::cs2_dumper::offsets::client_dll as client_dll_offsets;
+use crate::utils::bones::BoneConnection;
 use crate::utils::memory_reader::MemoryReader;
 use crate::utils::weapon::{proccess_weapon, Weapon};
 use egui_render_three_d::three_d::{Matrix4, Vector2, Vector3};
@@ -16,9 +17,13 @@ pub struct Entity {
     pub life_state: u8,
     //    pub active_weapon_index: i16,
     pub active_weapon_name: String,
+    pub bones: Vec<(Vector3<f32>, Vector3<f32>)>,
 }
 
-pub fn get_all_entities(memory_reader: &MemoryReader) -> Vec<Entity> {
+pub fn get_all_entities(
+    memory_reader: &MemoryReader,
+    bone_connection: &[BoneConnection],
+) -> Vec<Entity> {
     // Creating vector with entities
     let mut entities: Vec<Entity> = Vec::new();
 
@@ -92,6 +97,21 @@ pub fn get_all_entities(memory_reader: &MemoryReader) -> Vec<Entity> {
 
         let weapon_string = rx.recv().unwrap();
 
+        let player_game_scene =
+            memory_reader.read_usize(entity_pawn + client_dll::C_BaseEntity::m_pGameSceneNode);
+
+        let player_bone_array = memory_reader
+            .read_usize(player_game_scene + client_dll::CSkeletonInstance::m_modelState + 0x80);
+
+        let mut player_bones = Vec::new();
+
+        for bone in bone_connection {
+            player_bones.push((
+                memory_reader.read_vec_f32(player_bone_array + bone.bone1 * 32),
+                memory_reader.read_vec_f32(player_bone_array + bone.bone2 * 32),
+            ));
+        }
+
         entities.push(Entity {
             name: player_name,
             health: player_health,
@@ -101,6 +121,7 @@ pub fn get_all_entities(memory_reader: &MemoryReader) -> Vec<Entity> {
             life_state: player_life_state,
             //active_weapon_index: player_weapon_index,
             active_weapon_name: weapon_string,
+            bones: player_bones,
         });
     }
 
@@ -109,7 +130,10 @@ pub fn get_all_entities(memory_reader: &MemoryReader) -> Vec<Entity> {
 }
 
 // Function for reading local player
-pub fn get_local_player(memory_reader: &MemoryReader) -> Entity {
+pub fn get_local_player(
+    memory_reader: &MemoryReader,
+    bone_connection: &[BoneConnection],
+) -> Entity {
     let local_player_pawn =
         memory_reader.read_usize(memory_reader.module + client_dll_offsets::dwLocalPlayerPawn);
 
@@ -156,6 +180,21 @@ pub fn get_local_player(memory_reader: &MemoryReader) -> Entity {
 
     let weapon_string = rx.recv().unwrap();
 
+    let player_game_scene =
+        memory_reader.read_usize(local_player_pawn + client_dll::C_BaseEntity::m_pGameSceneNode);
+
+    let player_bone_array = memory_reader
+        .read_usize(player_game_scene + client_dll::CSkeletonInstance::m_modelState + 0x80);
+
+    let mut player_bones = Vec::new();
+
+    for bone in bone_connection {
+        player_bones.push((
+            memory_reader.read_vec_f32(player_bone_array + bone.bone1 * 32),
+            memory_reader.read_vec_f32(player_bone_array + bone.bone2 * 32),
+        ));
+    }
+
     Entity {
         name: player_name,
         health: player_health,
@@ -165,6 +204,7 @@ pub fn get_local_player(memory_reader: &MemoryReader) -> Entity {
         life_state: player_life_state,
         //active_weapon_index: player_weapon_index,
         active_weapon_name: weapon_string,
+        bones: player_bones,
     }
 }
 

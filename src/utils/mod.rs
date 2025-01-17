@@ -1,3 +1,4 @@
+pub mod bones;
 pub mod entity;
 pub mod esp_renderer;
 pub mod mem_utils;

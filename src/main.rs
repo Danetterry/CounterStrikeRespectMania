@@ -2,6 +2,7 @@ mod offsets;
 mod utils;
 
 // use egui::debug_text::print;
+use crate::utils::bones::BoneConnection;
 use crate::utils::esp_renderer::render_esp;
 use crate::utils::memory_reader::MemoryReader;
 use crate::utils::options::CheatOptions;
@@ -39,12 +40,16 @@ fn main() {
     // Creating options with default settings
     let options = CheatOptions::default();
 
+    // Creating bones connection vector list
+    let bones_connection = BoneConnection::get();
+
     // Starting overlay
     egui_overlay::start(OverlayGui {
         // Passing memory_reader value to use it inside overlay loop
         memory_reader,
         text_builder,
         options,
+        bones_connection,
     });
 }
 
@@ -52,6 +57,7 @@ pub struct OverlayGui {
     pub memory_reader: MemoryReader,
     pub text_builder: TextBuilder,
     pub options: CheatOptions,
+    pub bones_connection: Vec<BoneConnection>,
 }
 
 impl EguiOverlay for OverlayGui {
@@ -90,6 +96,7 @@ impl EguiOverlay for OverlayGui {
             &self.memory_reader,
             &mut self.text_builder,
             &self.options,
+            &self.bones_connection,
         );
 
         // here you decide if you want to be passthrough or not.

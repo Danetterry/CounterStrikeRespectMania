@@ -83,9 +83,56 @@ impl EguiOverlay for OverlayGui {
 
         // All menus
         egui::Window::new("CounterStrikeRespectMania").show(egui_context, |ui| {
-            ui.checkbox(&mut self.options.enable_line, "Включить линию снизу экрана");
-            ui.checkbox(&mut self.options.enable_box, "Включить боксы");
-            ui.checkbox(&mut self.options.enable_text, "Включить текст");
+            ui.checkbox(&mut self.options.line.enabled, "Enable line");
+            ui.collapsing("Line options", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Enemy colour");
+                    ui.color_edit_button_srgba(&mut self.options.line.enemy_color)
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Team colour");
+                    ui.color_edit_button_srgba(&mut self.options.line.team_color)
+                });
+            });
+
+            ui.checkbox(&mut self.options.esp_box.enabled, "Enable box");
+            ui.collapsing("Box options", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Enemy colour");
+                    ui.color_edit_button_srgba(&mut self.options.esp_box.enemy_color)
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Team colour");
+                    ui.color_edit_button_srgba(&mut self.options.esp_box.team_color)
+                });
+            });
+
+            ui.checkbox(&mut self.options.health_bar.enabled, "Enable health bar");
+            ui.checkbox(&mut self.options.health_bar.team_enabled, "Health bar on team");
+
+            ui.checkbox(&mut self.options.bones.enabled, "Enable bones");
+            ui.collapsing("Bones options", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Enemy colour");
+                    ui.color_edit_button_srgba(&mut self.options.bones.enemy_color)
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Team colour");
+                    ui.color_edit_button_srgba(&mut self.options.bones.team_color)
+                });
+            });
+
+            ui.checkbox(&mut self.options.text.enabled, "Enable text");
+            ui.collapsing("Text options", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Enemy colour");
+                    ui.color_edit_button_srgba(&mut self.options.text.enemy_color)
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Team colour");
+                    ui.color_edit_button_srgba(&mut self.options.text.team_color)
+                });
+            });
         });
 
         // Rendering ESP

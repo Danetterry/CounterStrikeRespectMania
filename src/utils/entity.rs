@@ -10,6 +10,7 @@ use std::thread;
 // This structure contains all needed thing about player
 pub struct Entity {
     pub name: String,
+    pub pawn: usize,
     pub health: i32,
     pub team: i32,
     pub position: Vector3<f32>,
@@ -114,6 +115,7 @@ pub fn get_all_entities(
 
         entities.push(Entity {
             name: player_name,
+            pawn: entity_pawn,
             health: player_health,
             team: player_team,
             position: player_position,
@@ -197,6 +199,7 @@ pub fn get_local_player(
 
     Entity {
         name: player_name,
+        pawn: local_player_pawn,
         health: player_health,
         team: player_team,
         position: player_position,

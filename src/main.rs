@@ -110,6 +110,9 @@ impl EguiOverlay for OverlayGui {
             ui.checkbox(&mut self.options.health_bar.enabled, "Enable health bar");
             ui.checkbox(&mut self.options.health_bar.team_enabled, "Health bar on team");
 
+            ui.checkbox(&mut self.options.armor_bar.enabled, "Enable armor bar");
+            ui.checkbox(&mut self.options.armor_bar.team_enabled, "Armor bar on team");
+
             ui.checkbox(&mut self.options.bones.enabled, "Enable bones");
             ui.collapsing("Bones options", |ui| {
                 ui.horizontal(|ui| {
@@ -155,5 +158,7 @@ impl EguiOverlay for OverlayGui {
             glfw_backend.set_passthrough(true)
         }
         egui_context.request_repaint();
+
+        // std::thread::sleep(std::time::Duration::from_millis(1));
     }
 }

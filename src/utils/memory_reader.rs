@@ -4,7 +4,6 @@ use process_memory::{DataMember, Memory, ProcessHandle, TryIntoProcessHandle};
 
 // This structure contains all functions needed to read game memory (also may be ported for another games)
 // Thanks to Tom Almeida for creating beautiful memory reading crate (https://crates.io/crates/process-memory)
-#[derive(Clone, Debug)]
 pub struct MemoryReader {
     pub handle: ProcessHandle,
     pub module: usize,

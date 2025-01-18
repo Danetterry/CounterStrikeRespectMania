@@ -110,7 +110,7 @@ pub fn get_colours(options: &CheatOptions, entity: &Entity, local_player: &Entit
             ..Default::default()
         });
     }
-    
+
     colours
 }
 
@@ -129,16 +129,19 @@ pub fn get_lines(
         if entity.pawn == local_player.pawn {
             continue;
         }
-        
+
         let health_bar_enabled: bool;
+        let armor_bar_enabled: bool;
 
         if entity.team == local_player.team {
             health_bar_enabled = options.health_bar.team_enabled;
+            armor_bar_enabled = options.armor_bar.team_enabled;
         }
         else {
             health_bar_enabled = options.health_bar.enabled;
+            armor_bar_enabled = options.armor_bar.enabled;
         }
-        
+
         // Line = 0, Box = 1, Skeleton = 2
         let colours = get_colours(options, entity, local_player);
 
@@ -259,43 +262,74 @@ pub fn get_lines(
             }
         }
 
-        if health_bar_enabled {
-        // Calculate health multiplier (for example 64 hp -> 0.64)
-        let health_multiplier = entity.health as f32 / 100.0;
-
         // Calculate thickness for health bar from box width
         let mut thickness = width / 5.0;
 
         // Thickness limits
         thickness = thickness.clamp(2.0, 5.0);
 
-        // Health bar renderer
-        let health_bar = Gm::new(
-            Line::new(
-                three_d_context,
-                vec2(
-                    feet.x - width - thickness,
-                    win_size[1] - head.y
-                        + ((feet.y - head.y) / 6.5)
-                        + (head.y - feet.y - ((feet.y - head.y) / 6.5)) * (1.0 - health_multiplier),
+        if armor_bar_enabled {
+            // Calculate health multiplier (for example 64 hp -> 0.64)
+            let armor_multiplier = entity.armor as f32 / 100.0;
+
+            // Armor bar renderer
+            let armor_bar = Gm::new(
+                Line::new(
+                    three_d_context,
+                    vec2(
+                        feet.x - width - thickness * 2.0 - (thickness / 2.0),
+                        win_size[1] - head.y
+                            + ((feet.y - head.y) / 6.5)
+                            + (head.y - feet.y - ((feet.y - head.y) / 6.5)) * (1.0 - armor_multiplier),
+                    ),
+                    vec2(feet.x - width - thickness * 2.0 - (thickness / 2.0), win_size[1] - feet.y),
+                    thickness,
                 ),
-                vec2(feet.x - width - thickness, win_size[1] - feet.y),
-                thickness,
-            ),
-            ColorMaterial {
-                color: Srgba::new(
-                    ((1.0 - health_multiplier) * 255.0).round() as u8,
-                    (health_multiplier * 255.0).round() as u8,
-                    0,
-                    0,
+                ColorMaterial {
+                    color: Srgba::new(
+                        0,
+                        0,
+                        (armor_multiplier * 255.0).round() as u8,
+                        100,
+                    ),
+                    ..Default::default()
+                },
+            );
+
+            lines.push(armor_bar);
+        }
+
+        if health_bar_enabled {
+            // Calculate health multiplier (for example 64 hp -> 0.64)
+            let health_multiplier = entity.health as f32 / 100.0;
+
+            // Health bar renderer
+            let health_bar = Gm::new(
+                Line::new(
+                    three_d_context,
+                    vec2(
+                        feet.x - width - thickness,
+                        win_size[1] - head.y
+                            + ((feet.y - head.y) / 6.5)
+                            + (head.y - feet.y - ((feet.y - head.y) / 6.5)) * (1.0 - health_multiplier),
+                    ),
+                    vec2(feet.x - width - thickness, win_size[1] - feet.y),
+                    thickness,
                 ),
-                ..Default::default()
-            },
-        );
+                ColorMaterial {
+                    color: Srgba::new(
+                        ((1.0 - health_multiplier) * 255.0).round() as u8,
+                        (health_multiplier * 255.0).round() as u8,
+                        0,
+                        100,
+                    ),
+                    ..Default::default()
+                }, 
+            );
 
         lines.push(health_bar);
-    }
         }
+    }
 
     lines
 }

@@ -12,6 +12,7 @@ pub struct Entity {
     pub name: String,
     pub pawn: usize,
     pub health: i32,
+    pub armor: i32,
     pub team: i32,
     pub position: Vector3<f32>,
     pub eye_position: Vector3<f32>,
@@ -71,6 +72,9 @@ pub fn get_all_entities(
         let player_health =
             memory_reader.read_i32(entity_pawn + client_dll::C_BaseEntity::m_iHealth);
 
+        let player_armor =
+            memory_reader.read_i32(entity_pawn + client_dll::C_CSPlayerPawn::m_ArmorValue);
+
         let player_name = memory_reader
             .read_string(entity_controller + client_dll::CBasePlayerController::m_iszPlayerName);
 
@@ -117,6 +121,7 @@ pub fn get_all_entities(
             name: player_name,
             pawn: entity_pawn,
             health: player_health,
+            armor: player_armor,
             team: player_team,
             position: player_position,
             eye_position: player_eye_position,
@@ -147,6 +152,9 @@ pub fn get_local_player(
 
     let player_health =
         memory_reader.read_i32(local_player_pawn + client_dll::C_BaseEntity::m_iHealth);
+
+    let player_armor =
+        memory_reader.read_i32(local_player_pawn + client_dll::C_CSPlayerPawn::m_ArmorValue);
 
     let player_team =
         memory_reader.read_i32(local_player_pawn + client_dll::C_BaseEntity::m_iTeamNum);
@@ -201,6 +209,7 @@ pub fn get_local_player(
         name: player_name,
         pawn: local_player_pawn,
         health: player_health,
+        armor: player_armor,
         team: player_team,
         position: player_position,
         eye_position: player_eye_position,

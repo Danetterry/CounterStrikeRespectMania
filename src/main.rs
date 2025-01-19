@@ -11,6 +11,11 @@ use egui_overlay::EguiOverlay;
 use egui_render_three_d::ThreeDBackend;
 use three_d_asset::io::load;
 use three_d_text_builder::{TextBuilder, TextBuilderSettings};
+use crate::utils::bhop::perform_bunny_hop;
+use crate::utils::entity::{get_local_player, Entity};
+use enigo::{
+    Enigo, Settings,
+};
 
 fn main() {
     // This is needed for logs
@@ -42,6 +47,9 @@ fn main() {
 
     // Creating bones connection vector list
     let bones_connection = BoneConnection::get();
+    
+    // Enigo for bhop
+    let mut enigo = Enigo::new(&Settings::default()).unwrap();
 
     // Starting overlay
     egui_overlay::start(OverlayGui {
@@ -50,6 +58,7 @@ fn main() {
         text_builder,
         options,
         bones_connection,
+        enigo
     });
 }
 
@@ -58,6 +67,7 @@ pub struct OverlayGui {
     pub text_builder: TextBuilder,
     pub options: CheatOptions,
     pub bones_connection: Vec<BoneConnection>,
+    pub enigo: Enigo,
 }
 
 impl EguiOverlay for OverlayGui {
@@ -136,7 +146,17 @@ impl EguiOverlay for OverlayGui {
                     ui.color_edit_button_srgba(&mut self.options.text.team_color)
                 });
             });
+
+            ui.separator();
+            
+            ui.label(format!("Flag: {:?}", self.options.bunny_hop.flag));
+            ui.label(format!("In Jump: {:?}", self.options.bunny_hop.in_jump));
+
+            ui.checkbox(&mut self.options.bunny_hop.enabled, "Enable bunny hop");
         });
+
+        // Getting local player
+        let local_player = get_local_player(&self.memory_reader, &self.bones_connection);
 
         // Rendering ESP
         render_esp(
@@ -144,10 +164,14 @@ impl EguiOverlay for OverlayGui {
             glfw_backend,
             &win_size,
             &self.memory_reader,
+            &local_player,
             &mut self.text_builder,
             &self.options,
             &self.bones_connection,
         );
+        
+        // Bunny hop
+        perform_bunny_hop(&local_player, &self.memory_reader, &mut self.options, &mut self.enigo);
 
         // here you decide if you want to be passthrough or not.
         if egui_context.wants_pointer_input() || egui_context.wants_keyboard_input() {

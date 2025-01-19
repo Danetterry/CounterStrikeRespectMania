@@ -8,6 +8,7 @@ pub struct CheatOptions {
     pub armor_bar: BarOption,
     pub bones: ESPOption,
     pub text: ESPOption,
+    pub bunny_hop: BhopOptions,
 }
 
 pub struct ESPOption {
@@ -20,6 +21,12 @@ pub struct BarOption {
     pub team_enabled: bool,
 }
 
+pub struct BhopOptions {
+    pub enabled: bool,
+    pub flag: bool,
+    pub in_jump: bool,
+}
+
 impl Default for CheatOptions {
     fn default() -> CheatOptions {
         CheatOptions {
@@ -29,6 +36,7 @@ impl Default for CheatOptions {
             armor_bar: BarOption { enabled: true, team_enabled: false },
             bones: ESPOption { enabled: true, team_color: Color32::TRANSPARENT, enemy_color: Color32::GREEN },
             text: ESPOption { enabled: true, team_color: Color32::TRANSPARENT, enemy_color: Color32::WHITE },
+            bunny_hop: BhopOptions { enabled: false, flag: false, in_jump: false },
         }
     }
 }

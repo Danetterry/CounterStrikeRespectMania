@@ -18,15 +18,13 @@ pub fn render_esp(
     glfw_backend: &GlfwBackend,
     win_size: &[f32; 2],
     memory_reader: &MemoryReader,
+    local_player: &Entity,
     text_builder: &mut TextBuilder,
     options: &CheatOptions,
     bone_connection: &[BoneConnection],
 ) {
     // Getting all players
     let entities = get_all_entities(memory_reader, bone_connection);
-
-    // Getting local player for team compare
-    let local_player = get_local_player(memory_reader, bone_connection);
 
     // This needed for esp
     let view_matrix = memory_reader.read_matrix4_f32(
@@ -247,6 +245,14 @@ pub fn get_lines(
             for bone in &entity.bones {
                 let first_bone = world_to_screen(&bone.0, view_matrix, win_size);
                 let second_bone = world_to_screen(&bone.1, view_matrix, win_size);
+                
+                if first_bone == Vector2::new(0.0, 0.0) {
+                    continue;
+                }
+                
+                if second_bone == Vector2::new(0.0, 0.0) {
+                    continue;
+                }
 
                 let bone_line = Gm::new(
                     Line::new(
@@ -324,7 +330,7 @@ pub fn get_lines(
                         100,
                     ),
                     ..Default::default()
-                }, 
+                },
             );
 
         lines.push(health_bar);

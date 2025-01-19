@@ -5,3 +5,4 @@ pub mod mem_utils;
 pub mod memory_reader;
 pub mod options;
 pub mod weapon;
+pub mod bhop;

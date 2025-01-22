@@ -1,5 +1,5 @@
 // Generated using https://github.com/a2x/cs2-dumper
-// 2025-01-15 01:31:41.276127300 UTC
+// 2025-01-22 02:16:57.488530400 UTC
 
 #![allow(non_upper_case_globals, non_camel_case_types, non_snake_case, unused)]
 
@@ -464,7 +464,7 @@ pub mod cs2_dumper {
                 pub const m_vecRenderAttributes: usize = 0xAE0; // C_UtlVectorEmbeddedNetworkVar<EntityRenderAttribute_t>
                 pub const m_bRenderToCubemaps: usize = 0xB48; // bool
                 pub const m_bNoInterpolate: usize = 0xB49; // bool
-                pub const m_Collision: usize = 0xB50; // 
+                pub const m_Collision: usize = 0xB50; // CCollisionProperty
                 pub const m_Glow: usize = 0xC00; // CGlowProperty
                 pub const m_flGlowBackfaceMult: usize = 0xC58; // float32
                 pub const m_fadeMinDist: usize = 0xC5C; // float32
@@ -924,9 +924,9 @@ pub mod cs2_dumper {
                 pub const m_iHostageEntityIDs: usize = 0x580; // CEntityIndex[12]
                 pub const m_bombsiteCenterA: usize = 0x5B0; // Vector
                 pub const m_bombsiteCenterB: usize = 0x5BC; // Vector
-                pub const m_hostageRescueX: usize = 0x5C8; // 
-                pub const m_hostageRescueY: usize = 0x5D8; // 
-                pub const m_hostageRescueZ: usize = 0x5E8; // 
+                pub const m_hostageRescueX: usize = 0x5C8; // int32[4]
+                pub const m_hostageRescueY: usize = 0x5D8; // int32[4]
+                pub const m_hostageRescueZ: usize = 0x5E8; // int32[4]
                 pub const m_bEndMatchNextMapAllVoted: usize = 0x5F8; // bool
                 pub const m_foundGoalPositions: usize = 0x5F9; // bool
             }
@@ -2342,7 +2342,7 @@ pub mod cs2_dumper {
             // MNetworkReplayCompatField
             pub mod CBasePlayerController {
                 pub const m_nFinalPredictedTick: usize = 0x570; // int32
-                pub const m_CommandContext: usize = 0x578; // 
+                pub const m_CommandContext: usize = 0x578; // C_CommandContext
                 pub const m_nInButtonsWhichAreToggles: usize = 0x620; // uint64
                 pub const m_nTickBase: usize = 0x628; // uint32
                 pub const m_hPawn: usize = 0x62C; // CHandle<C_BasePlayerPawn>
@@ -2706,9 +2706,9 @@ pub mod cs2_dumper {
                 pub const m_pItemServices: usize = 0x11B0; // CPlayer_ItemServices*
                 pub const m_pAutoaimServices: usize = 0x11B8; // CPlayer_AutoaimServices*
                 pub const m_pObserverServices: usize = 0x11C0; // CPlayer_ObserverServices*
-                pub const m_pWaterServices: usize = 0x11C8; // 
-                pub const m_pUseServices: usize = 0x11D0; // 
-                pub const m_pFlashlightServices: usize = 0x11D8; // 
+                pub const m_pWaterServices: usize = 0x11C8; // CPlayer_WaterServices*
+                pub const m_pUseServices: usize = 0x11D0; // CPlayer_UseServices*
+                pub const m_pFlashlightServices: usize = 0x11D8; // CPlayer_FlashlightServices*
                 pub const m_pCameraServices: usize = 0x11E0; // CPlayer_CameraServices*
                 pub const m_pMovementServices: usize = 0x11E8; // CPlayer_MovementServices*
                 pub const m_ServerViewAngleChanges: usize = 0x11F8; // C_UtlVectorEmbeddedNetworkVar<ViewAngleServerChange_t>
@@ -2785,7 +2785,7 @@ pub mod cs2_dumper {
                 pub const m_PredNetIntVariables: usize = 0x50; // C_NetworkUtlVectorBase<int32>
                 pub const m_PredNetUInt32Variables: usize = 0x68; // C_NetworkUtlVectorBase<uint32>
                 pub const m_PredNetUInt64Variables: usize = 0x80; // C_NetworkUtlVectorBase<uint64>
-                pub const m_PredNetFloatVariables: usize = 0x98; // 
+                pub const m_PredNetFloatVariables: usize = 0x98; // C_NetworkUtlVectorBase<float32>
                 pub const m_PredNetVectorVariables: usize = 0xB0; // C_NetworkUtlVectorBase<Vector>
                 pub const m_PredNetQuaternionVariables: usize = 0xC8; // C_NetworkUtlVectorBase<Quaternion>
                 pub const m_PredNetGlobalSymbolVariables: usize = 0xE0; // C_NetworkUtlVectorBase<CGlobalSymbol>
@@ -5815,7 +5815,7 @@ pub mod cs2_dumper {
                 pub const m_nLastThinkTick: usize = 0x320; // GameTick_t
                 pub const m_pGameSceneNode: usize = 0x328; // CGameSceneNode*
                 pub const m_pRenderComponent: usize = 0x330; // CRenderComponent*
-                pub const m_pCollision: usize = 0x338; // 
+                pub const m_pCollision: usize = 0x338; // CCollisionProperty*
                 pub const m_iMaxHealth: usize = 0x340; // int32
                 pub const m_iHealth: usize = 0x344; // int32
                 pub const m_lifeState: usize = 0x348; // uint8

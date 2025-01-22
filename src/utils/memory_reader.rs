@@ -4,7 +4,6 @@ use process_memory::{DataMember, Memory, ProcessHandle, TryIntoProcessHandle};
 
 // This structure contains all functions needed to read game memory (also may be ported for another games)
 // Thanks to Tom Almeida for creating beautiful memory reading crate (https://crates.io/crates/process-memory)
-#[derive(Clone, Debug)]
 pub struct MemoryReader {
     pub handle: ProcessHandle,
     pub module: usize,
@@ -43,6 +42,12 @@ impl MemoryReader {
         let offset = DataMember::<i32>::new_offset(self.handle, vec![offset]);
 
         unsafe { offset.read().unwrap_or_else(|_| 0) }
+    }
+
+    pub fn read_f32(&self, offset: usize) -> f32 {
+        let offset = DataMember::<f32>::new_offset(self.handle, vec![offset]);
+
+        unsafe { offset.read().unwrap_or_else(|_| 0f32) }
     }
 
     pub fn read_i16(&self, offset: usize) -> i16 {

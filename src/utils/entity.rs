@@ -1,5 +1,6 @@
 use crate::offsets::client_dll::cs2_dumper::schemas::client_dll;
 use crate::offsets::offsets::cs2_dumper::offsets::client_dll as client_dll_offsets;
+use crate::utils::bones::BoneConnection;
 use crate::utils::memory_reader::MemoryReader;
 use crate::utils::weapon::{proccess_weapon, Weapon};
 use egui_render_three_d::three_d::{Matrix4, Vector2, Vector3};
@@ -9,16 +10,31 @@ use std::thread;
 // This structure contains all needed thing about player
 pub struct Entity {
     pub name: String,
+    pub pawn: usize,
     pub health: i32,
+    pub armor: i32,
     pub team: i32,
     pub position: Vector3<f32>,
     pub eye_position: Vector3<f32>,
     pub life_state: u8,
     //    pub active_weapon_index: i16,
     pub active_weapon_name: String,
+    pub bones: Vec<(Vector3<f32>, Vector3<f32>)>,
 }
 
-pub fn get_all_entities(memory_reader: &MemoryReader) -> Vec<Entity> {
+pub struct Bomb {
+    pub is_planted: bool,
+    pub position: Vector3<f32>,
+    // 0 = A
+    // 1 = B
+    pub site: i32,
+    pub time: f32,
+}
+
+pub fn get_all_entities(
+    memory_reader: &MemoryReader,
+    bone_connection: &[BoneConnection],
+) -> Vec<Entity> {
     // Creating vector with entities
     let mut entities: Vec<Entity> = Vec::new();
 
@@ -65,6 +81,9 @@ pub fn get_all_entities(memory_reader: &MemoryReader) -> Vec<Entity> {
         let player_health =
             memory_reader.read_i32(entity_pawn + client_dll::C_BaseEntity::m_iHealth);
 
+        let player_armor =
+            memory_reader.read_i32(entity_pawn + client_dll::C_CSPlayerPawn::m_ArmorValue);
+
         let player_name = memory_reader
             .read_string(entity_controller + client_dll::CBasePlayerController::m_iszPlayerName);
 
@@ -92,15 +111,33 @@ pub fn get_all_entities(memory_reader: &MemoryReader) -> Vec<Entity> {
 
         let weapon_string = rx.recv().unwrap();
 
+        let player_game_scene =
+            memory_reader.read_usize(entity_pawn + client_dll::C_BaseEntity::m_pGameSceneNode);
+
+        let player_bone_array = memory_reader
+            .read_usize(player_game_scene + client_dll::CSkeletonInstance::m_modelState + 0x80);
+
+        let mut player_bones = Vec::new();
+
+        for bone in bone_connection {
+            player_bones.push((
+                memory_reader.read_vec_f32(player_bone_array + bone.bone1 * 32),
+                memory_reader.read_vec_f32(player_bone_array + bone.bone2 * 32),
+            ));
+        }
+
         entities.push(Entity {
             name: player_name,
+            pawn: entity_pawn,
             health: player_health,
+            armor: player_armor,
             team: player_team,
             position: player_position,
             eye_position: player_eye_position,
             life_state: player_life_state,
             //active_weapon_index: player_weapon_index,
             active_weapon_name: weapon_string,
+            bones: player_bones,
         });
     }
 
@@ -109,7 +146,10 @@ pub fn get_all_entities(memory_reader: &MemoryReader) -> Vec<Entity> {
 }
 
 // Function for reading local player
-pub fn get_local_player(memory_reader: &MemoryReader) -> Entity {
+pub fn get_local_player(
+    memory_reader: &MemoryReader,
+    bone_connection: &[BoneConnection],
+) -> Entity {
     let local_player_pawn =
         memory_reader.read_usize(memory_reader.module + client_dll_offsets::dwLocalPlayerPawn);
 
@@ -121,6 +161,9 @@ pub fn get_local_player(memory_reader: &MemoryReader) -> Entity {
 
     let player_health =
         memory_reader.read_i32(local_player_pawn + client_dll::C_BaseEntity::m_iHealth);
+
+    let player_armor =
+        memory_reader.read_i32(local_player_pawn + client_dll::C_CSPlayerPawn::m_ArmorValue);
 
     let player_team =
         memory_reader.read_i32(local_player_pawn + client_dll::C_BaseEntity::m_iTeamNum);
@@ -156,15 +199,33 @@ pub fn get_local_player(memory_reader: &MemoryReader) -> Entity {
 
     let weapon_string = rx.recv().unwrap();
 
+    let player_game_scene =
+        memory_reader.read_usize(local_player_pawn + client_dll::C_BaseEntity::m_pGameSceneNode);
+
+    let player_bone_array = memory_reader
+        .read_usize(player_game_scene + client_dll::CSkeletonInstance::m_modelState + 0x80);
+
+    let mut player_bones = Vec::new();
+
+    for bone in bone_connection {
+        player_bones.push((
+            memory_reader.read_vec_f32(player_bone_array + bone.bone1 * 32),
+            memory_reader.read_vec_f32(player_bone_array + bone.bone2 * 32),
+        ));
+    }
+
     Entity {
         name: player_name,
+        pawn: local_player_pawn,
         health: player_health,
+        armor: player_armor,
         team: player_team,
         position: player_position,
         eye_position: player_eye_position,
         life_state: player_life_state,
         //active_weapon_index: player_weapon_index,
         active_weapon_name: weapon_string,
+        bones: player_bones,
     }
 }
 
@@ -203,4 +264,34 @@ pub fn world_to_screen(
             * sight_y;
 
     Vector2::new(to_pos_x, to_pos_y)
+}
+
+
+pub fn get_bomb(memory_reader: &MemoryReader) -> Bomb {
+    let is_bomb_planted = memory_reader.read_bool(memory_reader.module + client_dll_offsets::dwPlantedC4 - 0x8);
+
+    if is_bomb_planted {
+        let bomb_pointer = memory_reader.read_usize(memory_reader.module + client_dll_offsets::dwPlantedC4);
+        
+        let bomb = memory_reader.read_usize(bomb_pointer);
+
+        let bomb_node = memory_reader.read_usize(bomb + client_dll::C_BaseEntity::m_pGameSceneNode);
+
+        let bomb_pos = memory_reader.read_vec_f32(bomb_node + client_dll::CGameSceneNode::m_vecAbsOrigin);
+
+        let bomb_time = memory_reader.read_f32(bomb + client_dll::C_PlantedC4::m_flC4Blow);
+        
+        let global_vars = memory_reader.read_usize(memory_reader.module + client_dll_offsets::dwGlobalVars);
+        
+        // 0x34 global time offset
+        let global_time = memory_reader.read_f32(global_vars + 0x34);
+
+        let time_before_explosion = global_time - bomb_time;
+
+        let bomb_site = memory_reader.read_i32(bomb + client_dll::C_PlantedC4::m_nBombSite);
+        
+        Bomb { is_planted: is_bomb_planted, position: bomb_pos, site: bomb_site, time: time_before_explosion }
+    } else { 
+        Bomb { is_planted: is_bomb_planted, position: Vector3::new(0.0, 0.0, 0.0), site: 0, time: 0.0 }
+    }
 }

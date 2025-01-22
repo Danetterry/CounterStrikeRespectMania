@@ -1,6 +1,6 @@
 use crate::offsets;
 use crate::utils::bones::BoneConnection;
-use crate::utils::entity::{get_all_entities, get_local_player, world_to_screen, Entity};
+use crate::utils::entity::{get_all_entities, world_to_screen, Bomb, Entity};
 use crate::utils::memory_reader::MemoryReader;
 use crate::utils::options::CheatOptions;
 use egui_render_three_d::three_d::{
@@ -9,11 +9,12 @@ use egui_render_three_d::three_d::{
 };
 use egui_render_three_d::{three_d, ThreeDBackend};
 use egui_window_glfw_passthrough::GlfwBackend;
+use three_d_asset::Vector3;
 use three_d_text_builder::{
     Text, TextAlign, TextBuilder, TextMaterial, TextMesh, TextPosition, TextRef,
 };
 
-pub fn render_esp(
+pub(crate) fn render_esp(
     three_d_backend: &ThreeDBackend,
     glfw_backend: &GlfwBackend,
     win_size: &[f32; 2],
@@ -22,6 +23,7 @@ pub fn render_esp(
     text_builder: &mut TextBuilder,
     options: &CheatOptions,
     bone_connection: &[BoneConnection],
+    bomb: &Bomb,
 ) {
     // Getting all players
     let entities = get_all_entities(memory_reader, bone_connection);
@@ -53,8 +55,9 @@ pub fn render_esp(
         win_size,
         &entities,
         &view_matrix,
-        &local_player,
+        local_player,
         options,
+        bomb
     );
 
     // Render each model in the vector
@@ -68,8 +71,9 @@ pub fn render_esp(
         text_builder,
         &entities,
         &view_matrix,
-        &local_player,
+        local_player,
         options,
+        bomb
     );
 
     for model in texts {
@@ -119,8 +123,67 @@ pub fn get_lines(
     view_matrix: &Matrix4<f32>,
     local_player: &Entity,
     options: &CheatOptions,
+    bomb: &Bomb,
 ) -> Vec<Gm<Line, ColorMaterial>> {
     let mut lines = Vec::new();
+    
+    if options.bomb.enabled && bomb.is_planted {
+        let bomb_pos = world_to_screen(&bomb.position, view_matrix, win_size);
+        let bomb_distance = get_distance(bomb.position, local_player.position);
+        
+        let bomb_height = 10.0 - bomb_distance + 5.0;
+        let bomb_width = bomb_height * 1.2 + 5.0;
+
+        if bomb_pos != Vector2::new(0.0, 0.0) {
+            let bottom = Gm::new(
+                Line::new(
+                    three_d_context,
+                    vec2(bomb_pos.x - bomb_width / 2.0, win_size[1] - bomb_pos.y),
+                    vec2(bomb_pos.x + bomb_width / 2.0, win_size[1] - bomb_pos.y),
+                    1.0,
+                ),
+                ColorMaterial { color: Srgba::from([options.bomb.color[0], options.bomb.color[1], options.bomb.color[2], options.bomb.color[3]]), ..Default::default() },
+            );
+
+            lines.push(bottom);
+
+            let upper = Gm::new(
+                Line::new(
+                    three_d_context,
+                    vec2(bomb_pos.x - bomb_width / 2.0, win_size[1] - bomb_pos.y + bomb_height),
+                    vec2(bomb_pos.x + bomb_width / 2.0, win_size[1] - bomb_pos.y + bomb_height),
+                    1.0,
+                ),
+                ColorMaterial { color: Srgba::from([options.bomb.color[0], options.bomb.color[1], options.bomb.color[2], options.bomb.color[3]]), ..Default::default() },
+            );
+
+            lines.push(upper);
+
+            let left = Gm::new(
+                Line::new(
+                    three_d_context,
+                    vec2(bomb_pos.x - bomb_width / 2.0, win_size[1] - bomb_pos.y + bomb_height),
+                    vec2(bomb_pos.x - bomb_width / 2.0, win_size[1] - bomb_pos.y),
+                    1.0,
+                ),
+                ColorMaterial { color: Srgba::from([options.bomb.color[0], options.bomb.color[1], options.bomb.color[2], options.bomb.color[3]]), ..Default::default() },
+            );
+
+            lines.push(left);
+
+            let right = Gm::new(
+                Line::new(
+                    three_d_context,
+                    vec2(bomb_pos.x + bomb_width / 2.0, win_size[1] - bomb_pos.y + bomb_height),
+                    vec2(bomb_pos.x + bomb_width / 2.0, win_size[1] - bomb_pos.y),
+                    1.0,
+                ),
+                ColorMaterial { color: Srgba::from([options.bomb.color[0], options.bomb.color[1], options.bomb.color[2], options.bomb.color[3]]), ..Default::default() },
+            );
+
+            lines.push(right);
+        }
+    }
 
     for entity in entities {
         // Skip if this is local player
@@ -340,7 +403,7 @@ pub fn get_lines(
     lines
 }
 
-pub fn get_text<'a>(
+fn get_text<'a>(
     three_d_context: &'a three_d::Context,
     win_size: &'a [f32; 2],
     text_builder: &'a mut TextBuilder,
@@ -348,9 +411,49 @@ pub fn get_text<'a>(
     view_matrix: &Matrix4<f32>,
     local_player: &Entity,
     options: &CheatOptions,
+    bomb: &Bomb,
 ) -> Vec<impl Iterator<Item = Gm<TextMesh, TextMaterial>> + 'a> {
     // Init text vector
     let mut texts = Vec::new();
+
+    if options.bomb.enabled && bomb.is_planted {
+        let bomb_pos = world_to_screen(&bomb.position, view_matrix, win_size);
+        let bomb_distance = get_distance(bomb.position, local_player.position);
+
+        let bomb_height = 10.0 - bomb_distance + 5.0;
+        
+        let c4_text = Text {
+            // Entity name as text to render
+            text: "C4".to_string(),
+            // Idk but this is necessary
+            align: TextAlign::Viewport(0, 1),
+            // Move text to box corner
+            position: TextPosition::Pixels(vec2(
+                bomb_pos.x,
+                win_size[1] - bomb_pos.y + bomb_height + 10.0,
+            )),
+            // Set color
+            color: Srgba::WHITE,
+            // Set text size based on box width
+            // size: width / 3.0,
+            // Using fixed size because of memory leak
+            size: 10.0,
+            ..Default::default()
+        };
+        
+        let c4_text_model = text_builder.build(
+            three_d_context,
+            &[
+                TextRef {
+                    text: "",
+                    ..Default::default()
+                },
+                c4_text.as_ref(),
+            ],
+        );
+
+        texts.push(c4_text_model);
+    }
 
     for entity in entities {
         // Skip if this is local player
@@ -448,4 +551,12 @@ pub fn get_text<'a>(
     }
 
     texts
+}
+
+fn get_distance(vec: Vector3<f32>, local_vec: Vector3<f32>) -> f32 {
+    let dx = vec.x - local_vec.x;
+    let dy = vec.y - local_vec.y;
+    let dz = vec.z - local_vec.z;
+    
+    f32::sqrt(dx * dx + dy * dy + dz * dz) / 100.0
 }

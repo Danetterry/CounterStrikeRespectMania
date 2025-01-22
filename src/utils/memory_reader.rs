@@ -44,6 +44,12 @@ impl MemoryReader {
         unsafe { offset.read().unwrap_or_else(|_| 0) }
     }
 
+    pub fn read_f32(&self, offset: usize) -> f32 {
+        let offset = DataMember::<f32>::new_offset(self.handle, vec![offset]);
+
+        unsafe { offset.read().unwrap_or_else(|_| 0f32) }
+    }
+
     pub fn read_i16(&self, offset: usize) -> i16 {
         let offset = DataMember::<i16>::new_offset(self.handle, vec![offset]);
 

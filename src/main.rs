@@ -7,12 +7,13 @@ use crate::utils::esp_renderer::render_esp;
 use crate::utils::memory_reader::MemoryReader;
 use crate::utils::options::CheatOptions;
 use display_info::DisplayInfo;
+use egui::{pos2, Color32, Pos2, Shadow};
 use egui_overlay::EguiOverlay;
 use egui_render_three_d::ThreeDBackend;
 use three_d_asset::io::load;
 use three_d_text_builder::{TextBuilder, TextBuilderSettings};
 use crate::utils::bhop::perform_bunny_hop;
-use crate::utils::entity::{get_local_player, Entity};
+use crate::utils::entity::{get_bomb, get_local_player};
 use enigo::{
     Enigo, Settings,
 };
@@ -49,7 +50,7 @@ fn main() {
     let bones_connection = BoneConnection::get();
     
     // Enigo for bhop
-    let mut enigo = Enigo::new(&Settings::default()).unwrap();
+    let enigo = Enigo::new(&Settings::default()).unwrap();
 
     // Starting overlay
     egui_overlay::start(OverlayGui {
@@ -90,6 +91,8 @@ impl EguiOverlay for OverlayGui {
             (display_infos[0].height - 1) as f32,
         ];
         glfw_backend.set_window_size(win_size);
+
+        egui_context.set_visuals_of(egui::Theme::Dark, egui::Visuals { ..Default::default() });
 
         // All menus
         egui::Window::new("CounterStrikeRespectMania").show(egui_context, |ui| {
@@ -146,13 +149,46 @@ impl EguiOverlay for OverlayGui {
                     ui.color_edit_button_srgba(&mut self.options.text.team_color)
                 });
             });
+            
+            ui.checkbox(&mut self.options.bomb.enabled, "Enable bomb esp");
+            ui.horizontal(|ui| {
+                ui.label("Bomb ESP Colour");
+                ui.color_edit_button_srgba(&mut self.options.bomb.color)
+            });
 
             ui.separator();
-            
-            ui.label(format!("Flag: {:?}", self.options.bunny_hop.flag));
-            ui.label(format!("In Jump: {:?}", self.options.bunny_hop.in_jump));
 
             ui.checkbox(&mut self.options.bunny_hop.enabled, "Enable bunny hop");
+
+            ui.separator();
+
+            ui.checkbox(&mut self.options.bomb_timer.enabled, "Enable bomb timer");
+            ui.checkbox(&mut self.options.bomb_timer.resizable, "Enable bomb timer resizable");
+            ui.add(egui::Slider::new(&mut self.options.bomb_timer.y_offset, 0.0..=win_size[1]).text("px"));
+        });
+
+        egui_context.set_visuals_of(egui::Theme::Dark, egui::Visuals { window_fill: Color32::from_rgba_unmultiplied(27, 27, 27, 150), window_shadow: Shadow::NONE, override_text_color: Some(Color32::WHITE), ..Default::default() });
+
+        let bomb = get_bomb(&self.memory_reader);
+
+        egui::Window::new("Bomb Timer").title_bar(false).resizable(self.options.bomb_timer.resizable).open(&mut self.options.bomb_timer.enabled).pivot(egui::Align2::CENTER_TOP).fixed_pos(pos2(win_size[0] / 2.0, self.options.bomb_timer.y_offset)).show(egui_context, |ui| {
+            ui.style_mut().interaction.selectable_labels = false;
+            
+            ui.vertical_centered(|ui| {
+                if !bomb.is_planted {
+                    ui.label("Bomb is not planted");
+                }
+                else {
+                    ui.colored_label(Color32::from_rgb(220, 0, 0), "Bomb planted");
+                    if bomb.site == 0 {
+                        ui.label("Bomb site is A");
+                    }
+                    else if bomb.site == 1 {
+                        ui.label("Bomb site is B");
+                    }
+                    ui.label(format!("Time left: {:.2}", -bomb.time));
+                }
+            });
         });
 
         // Getting local player
@@ -168,6 +204,7 @@ impl EguiOverlay for OverlayGui {
             &mut self.text_builder,
             &self.options,
             &self.bones_connection,
+            &bomb,
         );
         
         // Bunny hop

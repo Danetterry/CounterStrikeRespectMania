@@ -1,13 +1,16 @@
 mod offsets;
 mod utils;
 
+const COMPILE_DATETIME: time::OffsetDateTime = compile_time::datetime!();
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 // use egui::debug_text::print;
 use crate::utils::bones::BoneConnection;
 use crate::utils::esp_renderer::render_esp;
 use crate::utils::memory_reader::MemoryReader;
 use crate::utils::options::CheatOptions;
 use display_info::DisplayInfo;
-use egui::{pos2, Color32, Pos2, Shadow};
+use egui::{pos2, Color32, Shadow};
 use egui_overlay::EguiOverlay;
 use egui_render_three_d::ThreeDBackend;
 use three_d_asset::io::load;
@@ -17,6 +20,8 @@ use crate::utils::entity::{get_bomb, get_local_player};
 use enigo::{
     Enigo, Settings,
 };
+use std::time::{SystemTime, UNIX_EPOCH};
+use chrono::prelude::*;
 
 fn main() {
     // This is needed for logs
@@ -165,6 +170,12 @@ impl EguiOverlay for OverlayGui {
             ui.checkbox(&mut self.options.bomb_timer.enabled, "Enable bomb timer");
             ui.checkbox(&mut self.options.bomb_timer.resizable, "Enable bomb timer resizable");
             ui.add(egui::Slider::new(&mut self.options.bomb_timer.y_offset, 0.0..=win_size[1]).text("px"));
+
+            ui.separator();
+
+            ui.checkbox(&mut self.options.info.enabled, "Enable info window");
+            ui.checkbox(&mut self.options.info.resizable, "Make info window resizable");
+            ui.checkbox(&mut self.options.info.movable, "Make info window movable");
         });
 
         egui_context.set_visuals_of(egui::Theme::Dark, egui::Visuals { window_fill: Color32::from_rgba_unmultiplied(27, 27, 27, 150), window_shadow: Shadow::NONE, override_text_color: Some(Color32::WHITE), ..Default::default() });
@@ -189,6 +200,14 @@ impl EguiOverlay for OverlayGui {
                     ui.label(format!("Time left: {:.2}", -bomb.time));
                 }
             });
+        });
+
+        egui::Window::new("Info").title_bar(false).resizable(self.options.info.resizable).open(&mut self.options.info.enabled).movable(self.options.info.movable).show(egui_context, |ui| {
+            ui.label("Counter Strike Respect Mania V");
+            ui.label(format!("Version: {}", VERSION));
+            ui.label(format!("Compile date: {} {}:{}:{} UTC", COMPILE_DATETIME.date(), COMPILE_DATETIME.time().as_hms().0, COMPILE_DATETIME.time().as_hms().1, COMPILE_DATETIME.time().as_hms().2));
+            ui.separator();
+            ui.label(format!("Current time: {}", DateTime::from_timestamp(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64, 0).unwrap().format("%Y-%m-%d %H:%M:%S")));
         });
 
         // Getting local player

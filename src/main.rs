@@ -100,7 +100,7 @@ impl EguiOverlay for OverlayGui {
         egui_context.set_visuals_of(egui::Theme::Dark, egui::Visuals { ..Default::default() });
 
         // All menus
-        egui::Window::new("CounterStrikeRespectMania").show(egui_context, |ui| {
+        egui::Window::new("CSRM").show(egui_context, |ui| {
             ui.checkbox(&mut self.options.line.enabled, "Enable line");
             ui.collapsing("Line options", |ui| {
                 ui.horizontal(|ui| {
@@ -205,7 +205,7 @@ impl EguiOverlay for OverlayGui {
         egui::Window::new("Info").title_bar(false).resizable(self.options.info.resizable).open(&mut self.options.info.enabled).movable(self.options.info.movable).show(egui_context, |ui| {
             ui.label("Counter Strike Respect Mania V");
             ui.label(format!("Version: {}", VERSION));
-            ui.label(format!("Compile date: {} {}:{}:{} UTC", COMPILE_DATETIME.date(), COMPILE_DATETIME.time().as_hms().0, COMPILE_DATETIME.time().as_hms().1, COMPILE_DATETIME.time().as_hms().2));
+            ui.label(format!("Compile date: {} {:.0} UTC", COMPILE_DATETIME.date(), COMPILE_DATETIME.time()));
             ui.separator();
             ui.label(format!("Current time: {}", DateTime::from_timestamp(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64, 0).unwrap().format("%Y-%m-%d %H:%M:%S")));
         });

@@ -266,32 +266,45 @@ pub fn world_to_screen(
     Vector2::new(to_pos_x, to_pos_y)
 }
 
-
 pub fn get_bomb(memory_reader: &MemoryReader) -> Bomb {
-    let is_bomb_planted = memory_reader.read_bool(memory_reader.module + client_dll_offsets::dwPlantedC4 - 0x8);
+    let is_bomb_planted =
+        memory_reader.read_bool(memory_reader.module + client_dll_offsets::dwPlantedC4 - 0x8);
 
     if is_bomb_planted {
-        let bomb_pointer = memory_reader.read_usize(memory_reader.module + client_dll_offsets::dwPlantedC4);
-        
+        let bomb_pointer =
+            memory_reader.read_usize(memory_reader.module + client_dll_offsets::dwPlantedC4);
+
         let bomb = memory_reader.read_usize(bomb_pointer);
 
         let bomb_node = memory_reader.read_usize(bomb + client_dll::C_BaseEntity::m_pGameSceneNode);
 
-        let bomb_pos = memory_reader.read_vec_f32(bomb_node + client_dll::CGameSceneNode::m_vecAbsOrigin);
+        let bomb_pos =
+            memory_reader.read_vec_f32(bomb_node + client_dll::CGameSceneNode::m_vecAbsOrigin);
 
         let bomb_time = memory_reader.read_f32(bomb + client_dll::C_PlantedC4::m_flC4Blow);
-        
-        let global_vars = memory_reader.read_usize(memory_reader.module + client_dll_offsets::dwGlobalVars);
-        
-        // 0x34 global time offset
+
+        let global_vars =
+            memory_reader.read_usize(memory_reader.module + client_dll_offsets::dwGlobalVars);
+
+        // 0x34 is global time offset
         let global_time = memory_reader.read_f32(global_vars + 0x34);
 
         let time_before_explosion = global_time - bomb_time;
 
         let bomb_site = memory_reader.read_i32(bomb + client_dll::C_PlantedC4::m_nBombSite);
-        
-        Bomb { is_planted: is_bomb_planted, position: bomb_pos, site: bomb_site, time: time_before_explosion }
-    } else { 
-        Bomb { is_planted: is_bomb_planted, position: Vector3::new(0.0, 0.0, 0.0), site: 0, time: 0.0 }
+
+        Bomb {
+            is_planted: is_bomb_planted,
+            position: bomb_pos,
+            site: bomb_site,
+            time: time_before_explosion,
+        }
+    } else {
+        Bomb {
+            is_planted: is_bomb_planted,
+            position: Vector3::new(0.0, 0.0, 0.0),
+            site: 0,
+            time: 0.0,
+        }
     }
 }

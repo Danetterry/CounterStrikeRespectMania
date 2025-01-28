@@ -57,7 +57,7 @@ pub(crate) fn render_esp(
         &view_matrix,
         local_player,
         options,
-        bomb
+        bomb,
     );
 
     // Render each model in the vector
@@ -73,7 +73,7 @@ pub(crate) fn render_esp(
         &view_matrix,
         local_player,
         options,
-        bomb
+        bomb,
     );
 
     for model in texts {
@@ -81,34 +81,67 @@ pub(crate) fn render_esp(
     }
 }
 
-pub fn get_colours(options: &CheatOptions, entity: &Entity, local_player: &Entity) -> Vec<ColorMaterial> {
+pub fn get_colours(
+    options: &CheatOptions,
+    entity: &Entity,
+    local_player: &Entity,
+) -> Vec<ColorMaterial> {
     let mut colours = vec![];
 
     if entity.team == local_player.team {
         colours.push(ColorMaterial {
-            color: Srgba::from([options.line.team_color[0], options.line.team_color[1], options.line.team_color[2], options.line.team_color[3]]),
+            color: Srgba::from([
+                options.line.team_color[0],
+                options.line.team_color[1],
+                options.line.team_color[2],
+                options.line.team_color[3],
+            ]),
             ..Default::default()
         });
         colours.push(ColorMaterial {
-            color: Srgba::from([options.esp_box.team_color[0], options.esp_box.team_color[1], options.esp_box.team_color[2], options.esp_box.team_color[3]]),
+            color: Srgba::from([
+                options.esp_box.team_color[0],
+                options.esp_box.team_color[1],
+                options.esp_box.team_color[2],
+                options.esp_box.team_color[3],
+            ]),
             ..Default::default()
         });
         colours.push(ColorMaterial {
-            color: Srgba::from([options.bones.team_color[0], options.bones.team_color[1], options.bones.team_color[2], options.bones.team_color[3]]),
+            color: Srgba::from([
+                options.bones.team_color[0],
+                options.bones.team_color[1],
+                options.bones.team_color[2],
+                options.bones.team_color[3],
+            ]),
             ..Default::default()
         });
-    }
-    else {
+    } else {
         colours.push(ColorMaterial {
-            color: Srgba::from([options.line.enemy_color[0], options.line.enemy_color[1], options.line.enemy_color[2], options.line.enemy_color[3]]),
+            color: Srgba::from([
+                options.line.enemy_color[0],
+                options.line.enemy_color[1],
+                options.line.enemy_color[2],
+                options.line.enemy_color[3],
+            ]),
             ..Default::default()
         });
         colours.push(ColorMaterial {
-            color: Srgba::from([options.esp_box.enemy_color[0], options.esp_box.enemy_color[1], options.esp_box.enemy_color[2], options.esp_box.enemy_color[3]]),
+            color: Srgba::from([
+                options.esp_box.enemy_color[0],
+                options.esp_box.enemy_color[1],
+                options.esp_box.enemy_color[2],
+                options.esp_box.enemy_color[3],
+            ]),
             ..Default::default()
         });
         colours.push(ColorMaterial {
-            color: Srgba::from([options.bones.enemy_color[0], options.bones.enemy_color[1], options.bones.enemy_color[2], options.bones.enemy_color[3]]),
+            color: Srgba::from([
+                options.bones.enemy_color[0],
+                options.bones.enemy_color[1],
+                options.bones.enemy_color[2],
+                options.bones.enemy_color[3],
+            ]),
             ..Default::default()
         });
     }
@@ -126,11 +159,11 @@ pub fn get_lines(
     bomb: &Bomb,
 ) -> Vec<Gm<Line, ColorMaterial>> {
     let mut lines = Vec::new();
-    
+
     if options.bomb.enabled && bomb.is_planted {
         let bomb_pos = world_to_screen(&bomb.position, view_matrix, win_size);
         let bomb_distance = get_distance(bomb.position, local_player.position);
-        
+
         let bomb_height = 10.0 - bomb_distance + 5.0;
         let bomb_width = bomb_height * 1.2 + 5.0;
 
@@ -142,7 +175,15 @@ pub fn get_lines(
                     vec2(bomb_pos.x + bomb_width / 2.0, win_size[1] - bomb_pos.y),
                     1.0,
                 ),
-                ColorMaterial { color: Srgba::from([options.bomb.color[0], options.bomb.color[1], options.bomb.color[2], options.bomb.color[3]]), ..Default::default() },
+                ColorMaterial {
+                    color: Srgba::from([
+                        options.bomb.color[0],
+                        options.bomb.color[1],
+                        options.bomb.color[2],
+                        options.bomb.color[3],
+                    ]),
+                    ..Default::default()
+                },
             );
 
             lines.push(bottom);
@@ -150,11 +191,25 @@ pub fn get_lines(
             let upper = Gm::new(
                 Line::new(
                     three_d_context,
-                    vec2(bomb_pos.x - bomb_width / 2.0, win_size[1] - bomb_pos.y + bomb_height),
-                    vec2(bomb_pos.x + bomb_width / 2.0, win_size[1] - bomb_pos.y + bomb_height),
+                    vec2(
+                        bomb_pos.x - bomb_width / 2.0,
+                        win_size[1] - bomb_pos.y + bomb_height,
+                    ),
+                    vec2(
+                        bomb_pos.x + bomb_width / 2.0,
+                        win_size[1] - bomb_pos.y + bomb_height,
+                    ),
                     1.0,
                 ),
-                ColorMaterial { color: Srgba::from([options.bomb.color[0], options.bomb.color[1], options.bomb.color[2], options.bomb.color[3]]), ..Default::default() },
+                ColorMaterial {
+                    color: Srgba::from([
+                        options.bomb.color[0],
+                        options.bomb.color[1],
+                        options.bomb.color[2],
+                        options.bomb.color[3],
+                    ]),
+                    ..Default::default()
+                },
             );
 
             lines.push(upper);
@@ -162,11 +217,22 @@ pub fn get_lines(
             let left = Gm::new(
                 Line::new(
                     three_d_context,
-                    vec2(bomb_pos.x - bomb_width / 2.0, win_size[1] - bomb_pos.y + bomb_height),
+                    vec2(
+                        bomb_pos.x - bomb_width / 2.0,
+                        win_size[1] - bomb_pos.y + bomb_height,
+                    ),
                     vec2(bomb_pos.x - bomb_width / 2.0, win_size[1] - bomb_pos.y),
                     1.0,
                 ),
-                ColorMaterial { color: Srgba::from([options.bomb.color[0], options.bomb.color[1], options.bomb.color[2], options.bomb.color[3]]), ..Default::default() },
+                ColorMaterial {
+                    color: Srgba::from([
+                        options.bomb.color[0],
+                        options.bomb.color[1],
+                        options.bomb.color[2],
+                        options.bomb.color[3],
+                    ]),
+                    ..Default::default()
+                },
             );
 
             lines.push(left);
@@ -174,11 +240,22 @@ pub fn get_lines(
             let right = Gm::new(
                 Line::new(
                     three_d_context,
-                    vec2(bomb_pos.x + bomb_width / 2.0, win_size[1] - bomb_pos.y + bomb_height),
+                    vec2(
+                        bomb_pos.x + bomb_width / 2.0,
+                        win_size[1] - bomb_pos.y + bomb_height,
+                    ),
                     vec2(bomb_pos.x + bomb_width / 2.0, win_size[1] - bomb_pos.y),
                     1.0,
                 ),
-                ColorMaterial { color: Srgba::from([options.bomb.color[0], options.bomb.color[1], options.bomb.color[2], options.bomb.color[3]]), ..Default::default() },
+                ColorMaterial {
+                    color: Srgba::from([
+                        options.bomb.color[0],
+                        options.bomb.color[1],
+                        options.bomb.color[2],
+                        options.bomb.color[3],
+                    ]),
+                    ..Default::default()
+                },
             );
 
             lines.push(right);
@@ -197,8 +274,7 @@ pub fn get_lines(
         if entity.team == local_player.team {
             health_bar_enabled = options.health_bar.team_enabled;
             armor_bar_enabled = options.armor_bar.team_enabled;
-        }
-        else {
+        } else {
             health_bar_enabled = options.health_bar.enabled;
             armor_bar_enabled = options.armor_bar.enabled;
         }
@@ -308,11 +384,11 @@ pub fn get_lines(
             for bone in &entity.bones {
                 let first_bone = world_to_screen(&bone.0, view_matrix, win_size);
                 let second_bone = world_to_screen(&bone.1, view_matrix, win_size);
-                
+
                 if first_bone == Vector2::new(0.0, 0.0) {
                     continue;
                 }
-                
+
                 if second_bone == Vector2::new(0.0, 0.0) {
                     continue;
                 }
@@ -349,18 +425,17 @@ pub fn get_lines(
                         feet.x - width - thickness * 2.0 - (thickness / 2.0),
                         win_size[1] - head.y
                             + ((feet.y - head.y) / 6.5)
-                            + (head.y - feet.y - ((feet.y - head.y) / 6.5)) * (1.0 - armor_multiplier),
+                            + (head.y - feet.y - ((feet.y - head.y) / 6.5))
+                                * (1.0 - armor_multiplier),
                     ),
-                    vec2(feet.x - width - thickness * 2.0 - (thickness / 2.0), win_size[1] - feet.y),
+                    vec2(
+                        feet.x - width - thickness * 2.0 - (thickness / 2.0),
+                        win_size[1] - feet.y,
+                    ),
                     thickness,
                 ),
                 ColorMaterial {
-                    color: Srgba::new(
-                        0,
-                        0,
-                        (armor_multiplier * 255.0).round() as u8,
-                        100,
-                    ),
+                    color: Srgba::new(0, 0, (armor_multiplier * 255.0).round() as u8, 100),
                     ..Default::default()
                 },
             );
@@ -380,7 +455,8 @@ pub fn get_lines(
                         feet.x - width - thickness,
                         win_size[1] - head.y
                             + ((feet.y - head.y) / 6.5)
-                            + (head.y - feet.y - ((feet.y - head.y) / 6.5)) * (1.0 - health_multiplier),
+                            + (head.y - feet.y - ((feet.y - head.y) / 6.5))
+                                * (1.0 - health_multiplier),
                     ),
                     vec2(feet.x - width - thickness, win_size[1] - feet.y),
                     thickness,
@@ -396,7 +472,7 @@ pub fn get_lines(
                 },
             );
 
-        lines.push(health_bar);
+            lines.push(health_bar);
         }
     }
 
@@ -421,7 +497,7 @@ fn get_text<'a>(
         let bomb_distance = get_distance(bomb.position, local_player.position);
 
         let bomb_height = 10.0 - bomb_distance + 5.0;
-        
+
         let c4_text = Text {
             // Entity name as text to render
             text: "C4".to_string(),
@@ -440,7 +516,7 @@ fn get_text<'a>(
             size: 10.0,
             ..Default::default()
         };
-        
+
         let c4_text_model = text_builder.build(
             three_d_context,
             &[
@@ -464,10 +540,19 @@ fn get_text<'a>(
         let text_color: Srgba;
 
         if entity.team == local_player.team {
-            text_color = Srgba::from([options.text.team_color[0], options.text.team_color[1], options.text.team_color[2], options.text.team_color[3]]);
-        }
-        else {
-            text_color = Srgba::from([options.text.enemy_color[0], options.text.enemy_color[1], options.text.enemy_color[2], options.text.enemy_color[3]]);
+            text_color = Srgba::from([
+                options.text.team_color[0],
+                options.text.team_color[1],
+                options.text.team_color[2],
+                options.text.team_color[3],
+            ]);
+        } else {
+            text_color = Srgba::from([
+                options.text.enemy_color[0],
+                options.text.enemy_color[1],
+                options.text.enemy_color[2],
+                options.text.enemy_color[3],
+            ]);
         }
 
         // Translate player position into 2D
@@ -557,6 +642,6 @@ fn get_distance(vec: Vector3<f32>, local_vec: Vector3<f32>) -> f32 {
     let dx = vec.x - local_vec.x;
     let dy = vec.y - local_vec.y;
     let dz = vec.z - local_vec.z;
-    
+
     f32::sqrt(dx * dx + dy * dy + dz * dz) / 100.0
 }

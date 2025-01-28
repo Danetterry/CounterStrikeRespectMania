@@ -5,23 +5,23 @@ const COMPILE_DATETIME: time::OffsetDateTime = compile_time::datetime!();
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // use egui::debug_text::print;
+use crate::utils::bhop::perform_bunny_hop;
 use crate::utils::bones::BoneConnection;
+use crate::utils::entity::{get_bomb, get_local_player};
 use crate::utils::esp_renderer::render_esp;
 use crate::utils::memory_reader::MemoryReader;
 use crate::utils::options::CheatOptions;
+use chrono::prelude::*;
 use display_info::DisplayInfo;
 use egui::{pos2, Color32, Shadow};
 use egui_overlay::EguiOverlay;
 use egui_render_three_d::ThreeDBackend;
+use enigo::{Enigo, Settings};
+use std::time::{SystemTime, UNIX_EPOCH};
 use three_d_asset::io::load;
 use three_d_text_builder::{TextBuilder, TextBuilderSettings};
-use crate::utils::bhop::perform_bunny_hop;
-use crate::utils::entity::{get_bomb, get_local_player};
-use enigo::{
-    Enigo, Settings,
-};
-use std::time::{SystemTime, UNIX_EPOCH};
-use chrono::prelude::*;
+use winapi::um::winuser::VK_INSERT;
+use crate::utils::keybinds::check_if_key_pressed;
 
 fn main() {
     // This is needed for logs
@@ -35,7 +35,7 @@ fn main() {
         )
         .init();
 
-    // Initializing MemoryReading
+    // Initializing MemoryReader
     let memory_reader = MemoryReader::new("cs2.exe", "client.dll");
 
     // Load font for text builder
@@ -53,7 +53,7 @@ fn main() {
 
     // Creating bones connection vector list
     let bones_connection = BoneConnection::get();
-    
+
     // Enigo for bhop
     let enigo = Enigo::new(&Settings::default()).unwrap();
 
@@ -64,7 +64,7 @@ fn main() {
         text_builder,
         options,
         bones_connection,
-        enigo
+        enigo,
     });
 }
 
@@ -84,6 +84,13 @@ impl EguiOverlay for OverlayGui {
         three_d_backend: &mut ThreeDBackend,
         glfw_backend: &mut egui_window_glfw_passthrough::GlfwBackend,
     ) {
+        let is_pressed = check_if_key_pressed(&mut self.options, VK_INSERT);
+        
+        // Inverting enable menu bool
+        if is_pressed {
+            self.options.keybinds.enable_menu ^= true;
+        }
+
         // Things for set resolution
         // Getting all displays
         let display_infos = DisplayInfo::all().unwrap();
@@ -97,10 +104,16 @@ impl EguiOverlay for OverlayGui {
         ];
         glfw_backend.set_window_size(win_size);
 
-        egui_context.set_visuals_of(egui::Theme::Dark, egui::Visuals { ..Default::default() });
+        egui_context.set_visuals_of(
+            egui::Theme::Dark,
+            egui::Visuals {
+                ..Default::default()
+            },
+        );
 
         // All menus
-        egui::Window::new("CSRM").show(egui_context, |ui| {
+        
+        egui::Window::new("CSRM").open(&mut self.options.keybinds.enable_menu).show(egui_context, |ui| {
             ui.checkbox(&mut self.options.line.enabled, "Enable line");
             ui.collapsing("Line options", |ui| {
                 ui.horizontal(|ui| {
@@ -126,10 +139,16 @@ impl EguiOverlay for OverlayGui {
             });
 
             ui.checkbox(&mut self.options.health_bar.enabled, "Enable health bar");
-            ui.checkbox(&mut self.options.health_bar.team_enabled, "Health bar on team");
+            ui.checkbox(
+                &mut self.options.health_bar.team_enabled,
+                "Health bar on team",
+            );
 
             ui.checkbox(&mut self.options.armor_bar.enabled, "Enable armor bar");
-            ui.checkbox(&mut self.options.armor_bar.team_enabled, "Armor bar on team");
+            ui.checkbox(
+                &mut self.options.armor_bar.team_enabled,
+                "Armor bar on team",
+            );
 
             ui.checkbox(&mut self.options.bones.enabled, "Enable bones");
             ui.collapsing("Bones options", |ui| {
@@ -154,7 +173,7 @@ impl EguiOverlay for OverlayGui {
                     ui.color_edit_button_srgba(&mut self.options.text.team_color)
                 });
             });
-            
+
             ui.checkbox(&mut self.options.bomb.enabled, "Enable bomb esp");
             ui.horizontal(|ui| {
                 ui.label("Bomb ESP Colour");
@@ -168,47 +187,88 @@ impl EguiOverlay for OverlayGui {
             ui.separator();
 
             ui.checkbox(&mut self.options.bomb_timer.enabled, "Enable bomb timer");
-            ui.checkbox(&mut self.options.bomb_timer.resizable, "Enable bomb timer resizable");
-            ui.add(egui::Slider::new(&mut self.options.bomb_timer.y_offset, 0.0..=win_size[1]).text("px"));
+            ui.checkbox(
+                &mut self.options.bomb_timer.resizable,
+                "Enable bomb timer resizable",
+            );
+            ui.add(
+                egui::Slider::new(&mut self.options.bomb_timer.y_offset, 0.0..=win_size[1])
+                    .text("px"),
+            );
 
             ui.separator();
 
             ui.checkbox(&mut self.options.info.enabled, "Enable info window");
-            ui.checkbox(&mut self.options.info.resizable, "Make info window resizable");
+            ui.checkbox(
+                &mut self.options.info.resizable,
+                "Make info window resizable",
+            );
             ui.checkbox(&mut self.options.info.movable, "Make info window movable");
         });
 
-        egui_context.set_visuals_of(egui::Theme::Dark, egui::Visuals { window_fill: Color32::from_rgba_unmultiplied(27, 27, 27, 150), window_shadow: Shadow::NONE, override_text_color: Some(Color32::WHITE), ..Default::default() });
+        egui_context.set_visuals_of(
+            egui::Theme::Dark,
+            egui::Visuals {
+                window_fill: Color32::from_rgba_unmultiplied(27, 27, 27, 150),
+                window_shadow: Shadow::NONE,
+                override_text_color: Some(Color32::WHITE),
+                ..Default::default()
+            },
+        );
 
         let bomb = get_bomb(&self.memory_reader);
 
-        egui::Window::new("Bomb Timer").title_bar(false).resizable(self.options.bomb_timer.resizable).open(&mut self.options.bomb_timer.enabled).pivot(egui::Align2::CENTER_TOP).fixed_pos(pos2(win_size[0] / 2.0, self.options.bomb_timer.y_offset)).show(egui_context, |ui| {
-            ui.style_mut().interaction.selectable_labels = false;
-            
-            ui.vertical_centered(|ui| {
-                if !bomb.is_planted {
-                    ui.label("Bomb is not planted");
-                }
-                else {
-                    ui.colored_label(Color32::from_rgb(220, 0, 0), "Bomb planted");
-                    if bomb.site == 0 {
-                        ui.label("Bomb site is A");
-                    }
-                    else if bomb.site == 1 {
-                        ui.label("Bomb site is B");
-                    }
-                    ui.label(format!("Time left: {:.2}", -bomb.time));
-                }
-            });
-        });
+        egui::Window::new("Bomb Timer")
+            .title_bar(false)
+            .resizable(self.options.bomb_timer.resizable)
+            .open(&mut self.options.bomb_timer.enabled)
+            .pivot(egui::Align2::CENTER_TOP)
+            .fixed_pos(pos2(win_size[0] / 2.0, self.options.bomb_timer.y_offset))
+            .show(egui_context, |ui| {
+                ui.style_mut().interaction.selectable_labels = false;
 
-        egui::Window::new("Info").title_bar(false).resizable(self.options.info.resizable).open(&mut self.options.info.enabled).movable(self.options.info.movable).show(egui_context, |ui| {
-            ui.label("Counter Strike Respect Mania V");
-            ui.label(format!("Version: {}", VERSION));
-            ui.label(format!("Compile date: {} {:.0} UTC", COMPILE_DATETIME.date(), COMPILE_DATETIME.time()));
-            ui.separator();
-            ui.label(format!("Current time: {}", DateTime::from_timestamp(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64, 0).unwrap().format("%Y-%m-%d %H:%M:%S")));
-        });
+                ui.vertical_centered(|ui| {
+                    if !bomb.is_planted {
+                        ui.label("Bomb is not planted");
+                    } else {
+                        ui.colored_label(Color32::from_rgb(220, 0, 0), "Bomb planted");
+                        if bomb.site == 0 {
+                            ui.label("Bomb site is A");
+                        } else if bomb.site == 1 {
+                            ui.label("Bomb site is B");
+                        }
+                        ui.label(format!("Time left: {:.2}", -bomb.time));
+                    }
+                });
+            });
+
+        egui::Window::new("Info")
+            .title_bar(false)
+            .resizable(self.options.info.resizable)
+            .open(&mut self.options.info.enabled)
+            .movable(self.options.info.movable)
+            .show(egui_context, |ui| {
+                ui.label("Counter Strike Respect Mania V");
+                ui.label(format!("Version: {}", VERSION));
+                ui.label(format!(
+                    "Compile date: {} {:.0} UTC",
+                    COMPILE_DATETIME.date(),
+                    COMPILE_DATETIME.time()
+                ));
+                ui.separator();
+                ui.label(format!(
+                    "Current time: {}",
+                    DateTime::from_timestamp(
+                        SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap()
+                            .as_secs() as i64,
+                        0
+                    )
+                    .unwrap()
+                    .format("%Y-%m-%d %H:%M:%S")
+                ));
+            });
 
         // Getting local player
         let local_player = get_local_player(&self.memory_reader, &self.bones_connection);
@@ -225,9 +285,14 @@ impl EguiOverlay for OverlayGui {
             &self.bones_connection,
             &bomb,
         );
-        
+
         // Bunny hop
-        perform_bunny_hop(&local_player, &self.memory_reader, &mut self.options, &mut self.enigo);
+        perform_bunny_hop(
+            &local_player,
+            &self.memory_reader,
+            &mut self.options,
+            &mut self.enigo,
+        );
 
         // here you decide if you want to be passthrough or not.
         if egui_context.wants_pointer_input() || egui_context.wants_keyboard_input() {

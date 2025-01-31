@@ -14,7 +14,7 @@ use three_d_text_builder::{
     Text, TextAlign, TextBuilder, TextMaterial, TextMesh, TextPosition, TextRef,
 };
 
-pub(crate) fn render_esp(
+pub fn render_esp(
     three_d_backend: &ThreeDBackend,
     glfw_backend: &GlfwBackend,
     win_size: &[f32; 2],
@@ -65,19 +65,21 @@ pub(crate) fn render_esp(
         render_target.render(&camera, std::iter::once(model), &[]);
     }
 
-    let texts = get_text(
-        &three_d_backend.context,
-        win_size,
-        text_builder,
-        &entities,
-        &view_matrix,
-        local_player,
-        options,
-        bomb,
-    );
+    if options.text.enabled {
+        let texts = get_text(
+            &three_d_backend.context,
+            win_size,
+            text_builder,
+            &entities,
+            &view_matrix,
+            local_player,
+            options,
+            bomb,
+        );
 
-    for model in texts {
-        render_target.render(&camera, model, &[]);
+        for model in texts {
+            render_target.render(&camera, model, &[]);
+        }
     }
 }
 
@@ -171,8 +173,8 @@ pub fn get_lines(
             let bottom = Gm::new(
                 Line::new(
                     three_d_context,
-                    vec2(bomb_pos.x - bomb_width / 2.0, win_size[1] - bomb_pos.y),
-                    vec2(bomb_pos.x + bomb_width / 2.0, win_size[1] - bomb_pos.y),
+                    vec2(bomb_pos.x - bomb_width / 2.0, bomb_pos.y),
+                    vec2(bomb_pos.x + bomb_width / 2.0, bomb_pos.y),
                     1.0,
                 ),
                 ColorMaterial {
@@ -193,11 +195,11 @@ pub fn get_lines(
                     three_d_context,
                     vec2(
                         bomb_pos.x - bomb_width / 2.0,
-                        win_size[1] - bomb_pos.y + bomb_height,
+                        bomb_pos.y - bomb_height,
                     ),
                     vec2(
                         bomb_pos.x + bomb_width / 2.0,
-                        win_size[1] - bomb_pos.y + bomb_height,
+                        bomb_pos.y - bomb_height,
                     ),
                     1.0,
                 ),
@@ -219,9 +221,9 @@ pub fn get_lines(
                     three_d_context,
                     vec2(
                         bomb_pos.x - bomb_width / 2.0,
-                        win_size[1] - bomb_pos.y + bomb_height,
+                        bomb_pos.y - bomb_height,
                     ),
-                    vec2(bomb_pos.x - bomb_width / 2.0, win_size[1] - bomb_pos.y),
+                    vec2(bomb_pos.x - bomb_width / 2.0, bomb_pos.y),
                     1.0,
                 ),
                 ColorMaterial {
@@ -242,9 +244,9 @@ pub fn get_lines(
                     three_d_context,
                     vec2(
                         bomb_pos.x + bomb_width / 2.0,
-                        win_size[1] - bomb_pos.y + bomb_height,
+                        bomb_pos.y - bomb_height,
                     ),
-                    vec2(bomb_pos.x + bomb_width / 2.0, win_size[1] - bomb_pos.y),
+                    vec2(bomb_pos.x + bomb_width / 2.0, bomb_pos.y),
                     1.0,
                 ),
                 ColorMaterial {
@@ -304,7 +306,7 @@ pub fn get_lines(
             let line = Gm::new(
                 Line::new(
                     three_d_context,
-                    vec2(feet.x, win_size[1] - feet.y),
+                    vec2(feet.x, feet.y),
                     vec2(win_size[0] / 2.0, 0.0),
                     1.0,
                 ),
@@ -319,8 +321,8 @@ pub fn get_lines(
             let lower = Gm::new(
                 Line::new(
                     three_d_context,
-                    vec2(feet.x + width, win_size[1] - feet.y),
-                    vec2(feet.x - width, win_size[1] - feet.y),
+                    vec2(feet.x + width, feet.y),
+                    vec2(feet.x - width, feet.y),
                     1.0,
                 ),
                 colours[1].clone(),
@@ -334,11 +336,11 @@ pub fn get_lines(
                     three_d_context,
                     vec2(
                         feet.x + width,
-                        win_size[1] - head.y + ((feet.y - head.y) / 6.5),
+                        head.y - ((feet.y - head.y) / 6.5),
                     ),
                     vec2(
                         feet.x - width,
-                        win_size[1] - head.y + ((feet.y - head.y) / 6.5),
+                        head.y - ((feet.y - head.y) / 6.5),
                     ),
                     1.0,
                 ),
@@ -353,9 +355,9 @@ pub fn get_lines(
                     three_d_context,
                     vec2(
                         feet.x - width,
-                        win_size[1] - head.y + ((feet.y - head.y) / 6.5),
+                        head.y - ((feet.y - head.y) / 6.5),
                     ),
-                    vec2(feet.x - width, win_size[1] - feet.y),
+                    vec2(feet.x - width, feet.y),
                     1.0,
                 ),
                 colours[1].clone(),
@@ -369,9 +371,9 @@ pub fn get_lines(
                     three_d_context,
                     vec2(
                         feet.x + width,
-                        win_size[1] - head.y + ((feet.y - head.y) / 6.5),
+                        head.y - ((feet.y - head.y) / 6.5),
                     ),
-                    vec2(feet.x + width, win_size[1] - feet.y),
+                    vec2(feet.x + width, feet.y),
                     1.0,
                 ),
                 colours[1].clone(),
@@ -396,8 +398,8 @@ pub fn get_lines(
                 let bone_line = Gm::new(
                     Line::new(
                         three_d_context,
-                        vec2(first_bone.x, win_size[1] - first_bone.y),
-                        vec2(second_bone.x, win_size[1] - second_bone.y),
+                        vec2(first_bone.x, first_bone.y),
+                        vec2(second_bone.x, second_bone.y),
                         1.0,
                     ),
                     colours[2].clone(),
@@ -422,15 +424,15 @@ pub fn get_lines(
                 Line::new(
                     three_d_context,
                     vec2(
-                        feet.x - width - thickness * 2.0 - (thickness / 2.0),
-                        win_size[1] - head.y
-                            + ((feet.y - head.y) / 6.5)
-                            + (head.y - feet.y - ((feet.y - head.y) / 6.5))
+                        feet.x + width - thickness * 2.0 - (thickness / 2.0),
+                        head.y
+                            - ((feet.y - head.y) / 6.5)
+                            - (head.y - feet.y - ((feet.y - head.y) / 6.5))
                                 * (1.0 - armor_multiplier),
                     ),
                     vec2(
-                        feet.x - width - thickness * 2.0 - (thickness / 2.0),
-                        win_size[1] - feet.y,
+                        feet.x + width - thickness * 2.0 - (thickness / 2.0),
+                        feet.y,
                     ),
                     thickness,
                 ),
@@ -452,13 +454,13 @@ pub fn get_lines(
                 Line::new(
                     three_d_context,
                     vec2(
-                        feet.x - width - thickness,
-                        win_size[1] - head.y
-                            + ((feet.y - head.y) / 6.5)
-                            + (head.y - feet.y - ((feet.y - head.y) / 6.5))
+                        feet.x + width - thickness,
+                        head.y
+                            - ((feet.y - head.y) / 6.5)
+                            - (head.y - feet.y - ((feet.y - head.y) / 6.5))
                                 * (1.0 - health_multiplier),
                     ),
-                    vec2(feet.x - width - thickness, win_size[1] - feet.y),
+                    vec2(feet.x + width - thickness, feet.y),
                     thickness,
                 ),
                 ColorMaterial {
@@ -506,7 +508,7 @@ fn get_text<'a>(
             // Move text to box corner
             position: TextPosition::Pixels(vec2(
                 bomb_pos.x,
-                win_size[1] - bomb_pos.y + bomb_height + 10.0,
+                bomb_pos.y + 10.0,
             )),
             // Set color
             color: Srgba::WHITE,
@@ -575,7 +577,7 @@ fn get_text<'a>(
             // Idk but this is necessary
             align: TextAlign::Viewport(0, 0),
             // Move text to box corner
-            position: TextPosition::Pixels(vec2(feet.x, win_size[1] - feet.y - 5.0)),
+            position: TextPosition::Pixels(vec2(feet.x, feet.y - 5.0)),
             // Set colour
             color: text_color,
             // Set text size based on box width
@@ -608,7 +610,7 @@ fn get_text<'a>(
             // Move text to box corner
             position: TextPosition::Pixels(vec2(
                 feet.x,
-                win_size[1] - head.y + 10.0 + ((feet.y - head.y) / 6.5),
+                head.y + 10.0 - ((feet.y - head.y) / 6.5),
             )),
             // Set color
             color: text_color,

@@ -263,7 +263,7 @@ pub fn world_to_screen(
             / view
             * sight_y;
 
-    Vector2::new(to_pos_x, to_pos_y)
+    Vector2::new(to_pos_x, win_size[1] - to_pos_y)
 }
 
 pub fn get_bomb(memory_reader: &MemoryReader) -> Bomb {

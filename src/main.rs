@@ -112,184 +112,178 @@ impl EguiOverlay for OverlayGui {
         );
 
         // All menus
-        
-        if self.options.keybinds.enable_menu {
-            egui::Window::new("CSRM").open(&mut self.options.keybinds.enable_menu).show(egui_context, |ui| {
-                ui.checkbox(&mut self.options.line.enabled, "Enable line");
-                ui.collapsing("Line options", |ui| {
-                    ui.horizontal(|ui| {
-                        ui.label("Enemy colour");
-                        ui.color_edit_button_srgba(&mut self.options.line.enemy_color)
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("Team colour");
-                        ui.color_edit_button_srgba(&mut self.options.line.team_color)
-                    });
-                });
-
-                ui.checkbox(&mut self.options.esp_box.enabled, "Enable box");
-                ui.collapsing("Box options", |ui| {
-                    ui.horizontal(|ui| {
-                        ui.label("Enemy colour");
-                        ui.color_edit_button_srgba(&mut self.options.esp_box.enemy_color)
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("Team colour");
-                        ui.color_edit_button_srgba(&mut self.options.esp_box.team_color)
-                    });
-                });
-
-                ui.checkbox(&mut self.options.health_bar.enabled, "Enable health bar");
-                ui.checkbox(
-                    &mut self.options.health_bar.team_enabled,
-                    "Health bar on team",
-                );
-
-                ui.checkbox(&mut self.options.armor_bar.enabled, "Enable armor bar");
-                ui.checkbox(
-                    &mut self.options.armor_bar.team_enabled,
-                    "Armor bar on team",
-                );
-
-                ui.checkbox(&mut self.options.bones.enabled, "Enable bones");
-                ui.collapsing("Bones options", |ui| {
-                    ui.horizontal(|ui| {
-                        ui.label("Enemy colour");
-                        ui.color_edit_button_srgba(&mut self.options.bones.enemy_color)
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("Team colour");
-                        ui.color_edit_button_srgba(&mut self.options.bones.team_color)
-                    });
-                });
-
-                ui.checkbox(&mut self.options.text.enabled, "Enable text");
-                ui.collapsing("Text options", |ui| {
-                    ui.horizontal(|ui| {
-                        ui.label("Enemy colour");
-                        ui.color_edit_button_srgba(&mut self.options.text.enemy_color)
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("Team colour");
-                        ui.color_edit_button_srgba(&mut self.options.text.team_color)
-                    });
-                });
-
-                ui.checkbox(&mut self.options.bomb.enabled, "Enable bomb esp");
+        egui::Window::new("CSRM").open(&mut self.options.keybinds.enable_menu).show(egui_context, |ui| {
+            ui.checkbox(&mut self.options.line.enabled, "Enable line");
+            ui.collapsing("Line options", |ui| {
                 ui.horizontal(|ui| {
-                    ui.label("Bomb ESP Colour");
-                    ui.color_edit_button_srgba(&mut self.options.bomb.color)
+                    ui.label("Enemy colour");
+                    ui.color_edit_button_srgba(&mut self.options.line.enemy_color)
                 });
-
-                ui.separator();
-
-                ui.checkbox(&mut self.options.bunny_hop.enabled, "Enable bunny hop");
-
-                ui.separator();
-
-                ui.checkbox(&mut self.options.bomb_timer.enabled, "Enable bomb timer");
-                ui.checkbox(
-                    &mut self.options.bomb_timer.resizable,
-                    "Enable bomb timer resizable",
-                );
-                ui.add(
-                    egui::Slider::new(&mut self.options.bomb_timer.y_offset, 0.0..=win_size[1])
-                        .text("px"),
-                );
-
-                ui.separator();
-
-                ui.checkbox(&mut self.options.info.enabled, "Enable info window");
-                ui.checkbox(
-                    &mut self.options.info.resizable,
-                    "Make info window resizable",
-                );
-                ui.checkbox(&mut self.options.info.movable, "Make info window movable");
+                ui.horizontal(|ui| {
+                    ui.label("Team colour");
+                    ui.color_edit_button_srgba(&mut self.options.line.team_color)
+                });
             });
 
-            egui_context.set_visuals_of(
-                egui::Theme::Dark,
-                egui::Visuals {
-                    window_fill: Color32::from_rgba_unmultiplied(27, 27, 27, 150),
-                    window_shadow: Shadow::NONE,
-                    override_text_color: Some(Color32::WHITE),
-                    ..Default::default()
-                },
+            ui.checkbox(&mut self.options.esp_box.enabled, "Enable box");
+            ui.collapsing("Box options", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Enemy colour");
+                    ui.color_edit_button_srgba(&mut self.options.esp_box.enemy_color)
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Team colour");
+                    ui.color_edit_button_srgba(&mut self.options.esp_box.team_color)
+                });
+            });
+
+            ui.checkbox(&mut self.options.health_bar.enabled, "Enable health bar");
+            ui.checkbox(
+                &mut self.options.health_bar.team_enabled,
+                "Health bar on team",
             );
 
-            let bomb = get_bomb(&self.memory_reader);
+            ui.checkbox(&mut self.options.armor_bar.enabled, "Enable armor bar");
+            ui.checkbox(
+                &mut self.options.armor_bar.team_enabled,
+                "Armor bar on team",
+            );
 
-            egui::Window::new("Bomb Timer")
-                .title_bar(false)
-                .resizable(self.options.bomb_timer.resizable)
-                .open(&mut self.options.bomb_timer.enabled)
-                .pivot(egui::Align2::CENTER_TOP)
-                .fixed_pos(pos2(win_size[0] / 2.0, self.options.bomb_timer.y_offset))
-                .show(egui_context, |ui| {
-                    ui.style_mut().interaction.selectable_labels = false;
+            ui.checkbox(&mut self.options.bones.enabled, "Enable bones");
+            ui.collapsing("Bones options", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Enemy colour");
+                    ui.color_edit_button_srgba(&mut self.options.bones.enemy_color)
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Team colour");
+                    ui.color_edit_button_srgba(&mut self.options.bones.team_color)
+                });
+            });
 
-                    ui.vertical_centered(|ui| {
-                        if !bomb.is_planted {
-                            ui.label("Bomb is not planted");
-                        } else {
-                            ui.colored_label(Color32::from_rgb(220, 0, 0), "Bomb planted");
-                            if bomb.site == 0 {
-                                ui.label("Bomb site is A");
-                            } else if bomb.site == 1 {
-                                ui.label("Bomb site is B");
-                            }
-                            ui.label(format!("Time left: {:.2}", -bomb.time));
+            ui.checkbox(&mut self.options.text.enabled, "Enable text");
+            ui.collapsing("Text options", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Enemy colour");
+                    ui.color_edit_button_srgba(&mut self.options.text.enemy_color)
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Team colour");
+                    ui.color_edit_button_srgba(&mut self.options.text.team_color)
+                });
+            });
+
+            ui.checkbox(&mut self.options.bomb.enabled, "Enable bomb esp");
+            ui.horizontal(|ui| {
+                ui.label("Bomb ESP Colour");
+                ui.color_edit_button_srgba(&mut self.options.bomb.color)
+            });
+
+            ui.separator();
+
+            ui.checkbox(&mut self.options.bunny_hop.enabled, "Enable bunny hop");
+
+            ui.separator();
+
+            ui.checkbox(&mut self.options.bomb_timer.enabled, "Enable bomb timer");
+            ui.checkbox(
+                &mut self.options.bomb_timer.resizable,
+                "Enable bomb timer resizable",
+            );
+            ui.add(
+                egui::Slider::new(&mut self.options.bomb_timer.y_offset, 0.0..=win_size[1])
+                    .text("px"),
+            );
+
+            ui.separator();
+
+            ui.checkbox(&mut self.options.info.enabled, "Enable info window");
+            ui.checkbox(
+                &mut self.options.info.resizable,
+                "Make info window resizable",
+            );
+            ui.checkbox(&mut self.options.info.movable, "Make info window movable");
+        });
+
+        egui_context.set_visuals_of(
+            egui::Theme::Dark,
+            egui::Visuals {
+                window_fill: Color32::from_rgba_unmultiplied(27, 27, 27, 150),
+                window_shadow: Shadow::NONE,
+                override_text_color: Some(Color32::WHITE),
+                ..Default::default()
+            },
+        );
+
+        let bomb = get_bomb(&self.memory_reader);
+
+        egui::Window::new("Bomb Timer")
+            .title_bar(false)
+            .resizable(self.options.bomb_timer.resizable)
+            .open(&mut self.options.bomb_timer.enabled)
+            .pivot(egui::Align2::CENTER_TOP)
+            .fixed_pos(pos2(win_size[0] / 2.0, self.options.bomb_timer.y_offset))
+            .show(egui_context, |ui| {
+                ui.style_mut().interaction.selectable_labels = false;
+
+                ui.vertical_centered(|ui| {
+                    if !bomb.is_planted {
+                        ui.label("Bomb is not planted");
+                    } else {
+                        ui.colored_label(Color32::from_rgb(220, 0, 0), "Bomb planted");
+                        if bomb.site == 0 {
+                            ui.label("Bomb site is A");
+                        } else if bomb.site == 1 {
+                            ui.label("Bomb site is B");
                         }
-                    });
+                        ui.label(format!("Time left: {:.2}", -bomb.time));
+                    }
                 });
+            });
 
-            egui::Window::new("Info")
-                .title_bar(false)
-                .resizable(self.options.info.resizable)
-                .open(&mut self.options.info.enabled)
-                .movable(self.options.info.movable)
-                .show(egui_context, |ui| {
-                    ui.label("Counter Strike Respect Mania V");
-                    ui.label(format!("Version: {}", VERSION));
-                    ui.label(format!(
-                        "Compile date: {} {:.0}",
-                        COMPILE_DATETIME.date(),
-                        COMPILE_DATETIME.time()
-                    ));
-                    ui.separator();
-                    ui.label(format!(
-                        "Current time: {}",
-                        DateTime::from_timestamp(
-                            SystemTime::now()
-                                .duration_since(UNIX_EPOCH)
-                                .unwrap()
-                                .as_secs() as i64,
-                            0
-                        )
+        egui::Window::new("Info")
+            .title_bar(false)
+            .resizable(self.options.info.resizable)
+            .open(&mut self.options.info.enabled)
+            .movable(self.options.info.movable)
+            .show(egui_context, |ui| {
+                ui.label("Counter Strike Respect Mania V");
+                ui.label(format!("Version: {}", VERSION));
+                ui.label(format!(
+                    "Compile date: {} {:.0}",
+                    COMPILE_DATETIME.date(),
+                    COMPILE_DATETIME.time()
+                ));
+                ui.separator();
+                ui.label(format!(
+                    "Current time: {}",
+                    DateTime::from_timestamp(
+                        SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
                             .unwrap()
-                            .format("%Y-%m-%d %H:%M:%S")
-                    ));
-                });
-
-            // Getting local player
-            let local_player = get_local_player(&self.memory_reader, &self.bones_connection);
-
-            // Rendering ESP
-            render_esp(
-                three_d_backend,
-                glfw_backend,
-                &win_size,
-                &self.memory_reader,
-                &local_player,
-                &mut self.text_builder,
-                &self.options,
-                &self.bones_connection,
-                &bomb,
-            );
-        }
+                            .as_secs() as i64,
+                        0
+                    )
+                    .unwrap()
+                    .format("%Y-%m-%d %H:%M:%S")
+                ));
+            });
 
         // Getting local player
         let local_player = get_local_player(&self.memory_reader, &self.bones_connection);
+
+        // Rendering ESP
+        render_esp(
+            three_d_backend,
+            glfw_backend,
+            &win_size,
+            &self.memory_reader,
+            &local_player,
+            &mut self.text_builder,
+            &self.options,
+            &self.bones_connection,
+            &bomb,
+        );
 
         // Bunny hop
         perform_bunny_hop(
